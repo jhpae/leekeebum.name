@@ -3,241 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>AdDrop — Crate Opening</title>
+<title>AdDrop — Crates & Casino</title>
 
-<!-- ╔═══════════════════════════════════════════════════════════════════════╗
-     ║          ░░░  AD NETWORK CONFIGURATION BLOCK  ░░░                   ║
-     ║                                                                       ║
-     ║  STEP 1 ── Paste your ad network <script> tag below this comment.   ║
-     ║  STEP 2 ── In the JS CONFIG object (first block in <script>):        ║
-     ║             • Set  AD_NETWORK_CONFIGURED : true                      ║
-     ║             • Set  AD_PROVIDER to your network name                  ║
-     ║             • Fill in your ad unit ID / slot below                   ║
-     ║                                                                       ║
-     ║  ► Google AdSense (Rewarded Interstitial):                           ║
-     ║      <script async                                                    ║
-     ║        src="https://pagead2.googlesyndication.com/pagead/js/         ║
-     ║             adsbygoogle.js?client=ca-pub-YOUR_ID"                    ║
-     ║        crossorigin="anonymous"></script>                             ║
-     ║      Then call:  (adsbygoogle = window.adsbygoogle||[]).push({})     ║
-     ║                                                                       ║
-     ║  ► Adsterra:  Paste your direct-link or banner tag here.            ║
-     ║  ► PropellerAds: Paste their SDK snippet here.                       ║
-     ║  ► Any rewarded SDK: paste init snippet, then hook                   ║
-     ║      AD_PROVIDER.requestRewardedAd(onAdComplete)  in watchAd().      ║
-     ║                                                                       ║
-     ║  Without a configured network the game runs in [DEMO] mode:         ║
-     ║  a placeholder countdown awards 1 key — all gameplay still works.   ║
-     ╚═══════════════════════════════════════════════════════════════════════╝ -->
-
-<!-- PASTE AD NETWORK SCRIPT TAG(S) HERE ↓ -->
+<!-- ╔═══════════════════════════════════════════════════════════════════╗
+     ║  GOOGLE ADSENSE — publisher ca-pub-4658804751628379               ║
+     ║  Script is loaded below. Banner <ins> units are injected by JS    ║
+     ║  into every <div class="ad-slot"> and into the watch-ad box.      ║
+     ║  Optional: paste a display ad-unit slot ID into                   ║
+     ║  CONFIG.ADSENSE_SLOT (AdSense → Ads → By ad unit) for fixed units ║
+     ║  and enable Auto ads in your AdSense dashboard.                   ║
+     ╚═══════════════════════════════════════════════════════════════════╝ -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4658804751628379"
+     crossorigin="anonymous"></script>
 
 <style>
-/* ──────────────── RESET & BASE ──────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#07070f;font-family:'Segoe UI',system-ui,sans-serif;color:#dde0ff;-webkit-tap-highlight-color:transparent}
-
 :root{
   --bg:#07070f;--surf:#10102a;--surf2:#1a1a3a;--border:rgba(255,255,255,.1);
-  --txt:#dde0ff;--muted:#7070a0;--accent:#ff8800;--gold:#ffd700;
+  --txt:#dde0ff;--muted:#7070a0;--accent:#ff8800;--gold:#ffd700;--green:#2ecc71;--red:#ff5050;
   --c-common:#9ea3ac;--c-uncommon:#5e98d9;--c-rare:#8847ff;
-  --c-epic:#d14eff;--c-legend:#eb4b4b;--c-ultra:#ffd700;
-  --rarity-color:#fff;
+  --c-epic:#d14eff;--c-legend:#eb4b4b;--c-ultra:#ffd700;--rarity-color:#fff;
 }
-
-/* ──────────────── PARTICLE CANVAS ──────────────── */
 #ptcl{position:fixed;inset:0;pointer-events:none;z-index:900}
+#app{position:fixed;inset:0;overflow:hidden}
 
-/* ──────────────── APP WRAPPER ──────────────── */
-#app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+/* ── HEADER ── */
+#hdr{position:absolute;top:0;left:0;right:0;height:53px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 14px;background:rgba(10,10,30,.92);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);z-index:100}
+.logo{font-size:1.2rem;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,#ff8800,#ffd700);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.wallet{display:flex;gap:6px}
+.keys-badge,.coins-badge{display:flex;align-items:center;gap:5px;border-radius:20px;padding:4px 11px;font-weight:700;font-size:.9rem}
+.keys-badge{background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.3);color:var(--gold)}
+.coins-badge{background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.35);color:#7dffb0}
+.bump{animation:bump .35s ease}
+@keyframes bump{50%{transform:scale(1.18)}}
 
-/* ──────────────── HEADER ──────────────── */
-#hdr{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 18px;background:rgba(10,10,30,.9);border-bottom:1px solid var(--border);
-  backdrop-filter:blur(8px);z-index:100;flex-shrink:0;
-}
-.logo{font-size:1.3rem;font-weight:900;letter-spacing:2px;
-  background:linear-gradient(135deg,#ff8800,#ffd700);-webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;background-clip:text}
-.keys-badge{
-  display:flex;align-items:center;gap:6px;background:rgba(255,215,0,.12);
-  border:1px solid rgba(255,215,0,.3);border-radius:20px;padding:5px 14px;
-  font-weight:700;color:var(--gold);font-size:.95rem;
-}
-.keys-badge .ki{font-size:1.1rem}
+/* ── BOTTOM NAV ── */
+#nav{position:absolute;left:0;right:0;bottom:0;height:60px;display:flex;background:rgba(10,10,30,.96);
+  border-top:1px solid var(--border);z-index:100;backdrop-filter:blur(8px)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;
+  color:var(--muted);font-size:.66rem;font-weight:700;letter-spacing:.5px;cursor:pointer;transition:color .2s;position:relative}
+.tab .ti{font-size:1.3rem;line-height:1;filter:grayscale(.6);transition:filter .2s,transform .2s}
+.tab.active{color:var(--gold)}
+.tab.active .ti{filter:none;transform:translateY(-2px)}
+.tab.active::before{content:'';position:absolute;top:0;left:25%;right:25%;height:3px;border-radius:0 0 3px 3px;background:var(--gold)}
 
-/* ──────────────── SCREENS ──────────────── */
-.screen{
-  position:absolute;inset:0;top:53px;display:flex;flex-direction:column;
-  align-items:center;overflow-y:auto;padding:20px 16px 30px;
-  opacity:0;pointer-events:none;transition:opacity .3s ease;
-}
+/* ── SCREENS ── */
+.screen{position:absolute;left:0;right:0;top:53px;bottom:60px;display:flex;flex-direction:column;align-items:center;
+  overflow-y:auto;overflow-x:hidden;padding:18px 14px 26px;gap:14px;opacity:0;pointer-events:none;transition:opacity .3s ease}
 .screen.active{opacity:1;pointer-events:all}
+.screen>*{flex-shrink:0}
 
-/* ──────────────── HOME SCREEN ──────────────── */
-#s-home{justify-content:flex-start;gap:0}
-.home-hero{display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0 24px}
+/* ── HOME ── */
+.home-hero{display:flex;flex-direction:column;align-items:center;gap:14px;padding:8px 0 4px}
 .case-wrap{position:relative;cursor:pointer;transition:transform .2s}
 .case-wrap:hover{transform:translateY(-6px) scale(1.03)}
-.case-body{
-  width:170px;height:170px;
-  background:linear-gradient(145deg,#c06000,#ff9400,#ff6a00);
-  border-radius:16px;border:3px solid #ffc040;
-  box-shadow:0 0 50px rgba(255,140,0,.5),inset 0 2px 0 rgba(255,255,255,.3);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:4px;position:relative;overflow:hidden;
-}
-.case-body::before{
-  content:'';position:absolute;inset:0;
-  background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.05) 20px,rgba(255,255,255,.05) 21px);
-}
-.case-icon{font-size:64px;line-height:1;z-index:1;filter:drop-shadow(0 0 12px rgba(255,215,0,.8))}
+.case-body{width:160px;height:160px;background:linear-gradient(145deg,#c06000,#ff9400,#ff6a00);border-radius:16px;border:3px solid #ffc040;
+  box-shadow:0 0 50px rgba(255,140,0,.5),inset 0 2px 0 rgba(255,255,255,.3);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:4px;position:relative;overflow:hidden}
+.case-body::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.05) 20px,rgba(255,255,255,.05) 21px)}
+.case-icon{font-size:60px;line-height:1;z-index:1;filter:drop-shadow(0 0 12px rgba(255,215,0,.8))}
 .case-label{font-size:.65rem;font-weight:700;letter-spacing:3px;color:#ffe9c0;z-index:1;opacity:.8}
-
-.home-keys-info{text-align:center;margin-bottom:6px}
+.home-keys-info{text-align:center}
 .home-keys-info h3{font-size:.8rem;color:var(--muted);font-weight:500;letter-spacing:1px;text-transform:uppercase}
-.ad-timer-badge{
-  display:inline-block;margin-top:6px;padding:3px 10px;border-radius:10px;
-  background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.35);
-  font-size:.78rem;color:var(--gold);font-weight:600
-}
+.ad-timer-badge{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:10px;background:rgba(255,215,0,.15);
+  border:1px solid rgba(255,215,0,.35);font-size:.78rem;color:var(--gold);font-weight:600}
+.home-actions{width:100%;max-width:380px;display:flex;flex-direction:column;gap:10px}
+.home-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-.home-actions{width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px}
-
-/* ──────────────── BUTTONS ──────────────── */
-.btn{
-  width:100%;padding:14px 18px;border:none;border-radius:10px;
-  font-size:.95rem;font-weight:700;letter-spacing:.5px;cursor:pointer;
-  transition:transform .12s,box-shadow .12s,filter .12s;text-transform:uppercase;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-}
+/* ── BUTTONS ── */
+.btn{width:100%;padding:13px 16px;border:none;border-radius:10px;font-size:.92rem;font-weight:700;letter-spacing:.5px;cursor:pointer;
+  transition:transform .12s,box-shadow .12s,filter .12s,opacity .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--txt)}
 .btn:active{transform:scale(.96)}
-.btn-primary{
-  background:linear-gradient(135deg,#ff8800,#ffaa00);color:#0a0a00;
-  box-shadow:0 4px 20px rgba(255,136,0,.4);
-}
+.btn:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn-primary{background:linear-gradient(135deg,#ff8800,#ffaa00);color:#0a0a00;box-shadow:0 4px 20px rgba(255,136,0,.4)}
 .btn-primary:hover{box-shadow:0 4px 30px rgba(255,136,0,.6);filter:brightness(1.1)}
-.btn-secondary{
-  background:var(--surf2);color:var(--txt);border:1px solid var(--border);
-}
-.btn-secondary:hover{background:#242450;border-color:rgba(255,255,255,.2)}
-.btn-open{
-  background:linear-gradient(135deg,#1a0050,#4400cc,#6600ff);color:#fff;
-  box-shadow:0 4px 20px rgba(100,0,255,.4);border:1px solid #8840ff;
-}
-.btn-open:hover{box-shadow:0 4px 30px rgba(100,0,255,.6)}
-.btn-open:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
-.btn-danger{background:rgba(180,30,30,.3);color:#ff6060;border:1px solid #602020}
-.btn-danger:hover{background:rgba(180,30,30,.5)}
-.btn-sm{padding:7px 14px;font-size:.78rem;width:auto;border-radius:7px}
-.btn-back{
-  background:none;border:1px solid var(--border);color:var(--muted);
-  padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.85rem;
-  transition:color .2s,border-color .2s;
-}
+.btn-secondary{background:var(--surf2);color:var(--txt);border:1px solid var(--border)}
+.btn-secondary:hover{background:#242450}
+.btn-open{background:linear-gradient(135deg,#1a0050,#4400cc,#6600ff);color:#fff;box-shadow:0 4px 20px rgba(100,0,255,.4);border:1px solid #8840ff}
+.btn-green{background:linear-gradient(135deg,#0f8f4a,#2ecc71);color:#021;box-shadow:0 4px 18px rgba(46,204,113,.35)}
+.btn-red{background:linear-gradient(135deg,#a31515,#e84343);color:#fff;box-shadow:0 4px 18px rgba(232,67,67,.35)}
+.btn-blue{background:linear-gradient(135deg,#1747a6,#3d8bff);color:#fff;box-shadow:0 4px 18px rgba(61,139,255,.35)}
+.btn-sm{padding:7px 12px;font-size:.75rem;width:auto;border-radius:7px}
+.btn-back{background:none;border:1px solid var(--border);color:var(--muted);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:.82rem}
 .btn-back:hover{color:var(--txt);border-color:rgba(255,255,255,.3)}
+.sub-label{font-size:.72rem;opacity:.7;font-weight:500;margin-left:2px}
 
-.sub-label{font-size:.72rem;color:rgba(255,255,255,.55);font-weight:500;margin-left:2px}
-
-/* ──────────────── AD SCREEN ──────────────── */
-#s-ad{justify-content:center;gap:20px}
-.ad-screen-inner{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:20px}
-.ad-box{
-  width:100%;max-width:360px;min-height:200px;background:var(--surf);
-  border:2px dashed var(--border);border-radius:12px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:10px;padding:24px;text-align:center;position:relative;overflow:hidden;
-}
-.ad-demo-tag{
-  position:absolute;top:8px;left:8px;
-  background:rgba(255,136,0,.2);border:1px solid var(--accent);
-  color:var(--accent);font-size:.65rem;font-weight:700;letter-spacing:2px;
-  padding:2px 8px;border-radius:4px;
-}
-.ad-brand{font-size:1.6rem;font-weight:900;color:var(--muted);opacity:.6;letter-spacing:4px}
-.ad-tagline{font-size:.8rem;color:var(--muted)}
-.ad-timer-ring{
-  width:100px;height:100px;position:relative;
-  display:flex;align-items:center;justify-content:center;
-}
+/* ── ADS ── */
+.ad-slot{width:100%;max-width:480px;min-height:70px;background:rgba(255,255,255,.025);border:1px dashed var(--border);border-radius:10px;
+  padding:4px;display:flex;flex-direction:column;align-items:stretch;overflow:hidden;position:relative}
+.ad-lbl{font-size:.55rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;text-align:center;opacity:.7;margin-bottom:2px}
+.ad-screen-inner{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.ad-box{width:100%;min-height:250px;background:var(--surf);border:2px dashed var(--border);border-radius:12px;display:flex;flex-direction:column;
+  align-items:stretch;justify-content:center;gap:6px;padding:10px;text-align:center;position:relative;overflow:hidden}
+.ad-net-tag{position:absolute;top:6px;left:8px;background:rgba(255,136,0,.2);border:1px solid var(--accent);color:var(--accent);
+  font-size:.6rem;font-weight:700;letter-spacing:2px;padding:2px 8px;border-radius:4px;z-index:2}
+#ad-unit-slot{width:100%;min-height:200px;display:flex;flex-direction:column;justify-content:center;margin-top:16px}
+.ad-fallback{display:none;flex-direction:column;align-items:center;gap:6px;padding:10px}
+.ad-fallback.show{display:flex}
+.ad-brand{font-size:1.5rem;font-weight:900;color:var(--muted);opacity:.6;letter-spacing:4px}
+.ad-tagline{font-size:.78rem;color:var(--muted)}
+.ad-timer-ring{width:96px;height:96px;position:relative;display:flex;align-items:center;justify-content:center}
 .ad-timer-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
-.ad-timer-ring circle{
-  fill:none;stroke-width:6;
-  stroke-linecap:round;transition:stroke-dashoffset .9s linear;
-}
+.ad-timer-ring circle{fill:none;stroke-width:6;stroke-linecap:round}
 .ring-bg{stroke:rgba(255,255,255,.1)}
 .ring-fg{stroke:var(--accent);stroke-dasharray:283;stroke-dashoffset:0}
-.ad-secs{font-size:2.2rem;font-weight:900;color:var(--accent)}
+.ad-secs{font-size:2.1rem;font-weight:900;color:var(--accent)}
 .ad-earning-info{text-align:center;font-size:.85rem;color:var(--muted)}
 .ad-earning-info b{color:var(--gold)}
-.ad-rarity-tip{
-  background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);
-  border-radius:8px;padding:10px 16px;text-align:center;font-size:.78rem;color:var(--gold);
-  max-width:320px;
-}
+.ad-rarity-tip{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);border-radius:8px;padding:9px 14px;text-align:center;font-size:.78rem;color:var(--gold);max-width:340px}
+.gad{display:none;width:100%;max-width:440px;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(255,136,0,.15),rgba(255,215,0,.08));border:1px solid rgba(255,170,0,.45);font-size:.82rem;font-weight:600;color:#ffd48a;animation:pop-in .35s ease}
+.gad.show{display:flex}
 
-/* ──────────────── OPENING SCREEN ──────────────── */
-#s-open{padding:16px 0;justify-content:flex-start;gap:0}
-.open-header{
-  width:100%;display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px 16px;flex-shrink:0;
-}
-.open-header h2{font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
-
-#open-preroll{
-  width:100%;display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:16px;padding:30px 16px;
-}
-#open-rolling{width:100%;display:none;flex-direction:column;gap:0}
-
-/* ─ REEL ─ */
-.reel-section{width:100%;position:relative;overflow:visible}
-.reel-container{
-  width:100%;height:158px;overflow:hidden;position:relative;
-  background:#050512;
-  border-top:2px solid rgba(255,255,255,.12);
-  border-bottom:2px solid rgba(255,255,255,.12);
-}
-/* fade edges */
-.reel-container::before,.reel-container::after{
-  content:'';position:absolute;top:0;height:100%;width:120px;z-index:5;pointer-events:none;
-}
+/* ── CASE OPENING ── */
+#s-open{padding:12px 0;gap:0}
+.open-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:0 14px 14px}
+#open-preroll{width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px 16px}
+#open-rolling{width:100%;display:none;flex-direction:column;gap:16px;padding:20px 0}
+.reel-section{width:100%;position:relative}
+.reel-container{width:100%;height:158px;overflow:hidden;position:relative;background:#050512;border-top:2px solid rgba(255,255,255,.12);border-bottom:2px solid rgba(255,255,255,.12)}
+.reel-container::before,.reel-container::after{content:'';position:absolute;top:0;height:100%;width:110px;z-index:5;pointer-events:none}
 .reel-container::before{left:0;background:linear-gradient(to right,#050512,transparent)}
 .reel-container::after{right:0;background:linear-gradient(to left,#050512,transparent)}
-/* center line */
-.reel-marker{
-  position:absolute;top:0;left:50%;transform:translateX(-50%);
-  width:2px;height:100%;background:rgba(255,255,255,.9);z-index:10;pointer-events:none;
-  box-shadow:0 0 8px #fff;
-}
-.reel-marker::before{
-  content:'▼';position:absolute;top:-2px;left:50%;transform:translateX(-50%);
-  color:#fff;font-size:14px;line-height:1;
-}
-.reel-marker::after{
-  content:'▲';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
-  color:#fff;font-size:14px;line-height:1;
-}
-.reel-strip{
-  display:flex;align-items:center;height:100%;
-  will-change:transform;position:relative;
-}
-/* ─ REEL CARDS ─ */
-.rc{
-  flex-shrink:0;width:120px;height:140px;margin:0 5px;
-  border-radius:10px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:5px;
-  background:var(--surf2);border:2px solid rgba(255,255,255,.08);
-  position:relative;overflow:hidden;user-select:none;
-}
-.rc::before{
-  content:'';position:absolute;top:-40px;left:0;right:0;height:40px;
-  background:linear-gradient(to bottom,rgba(255,255,255,.06),transparent);
-}
-.rc .rc-emoji{font-size:2.6rem;line-height:1;pointer-events:none}
-.rc .rc-name{font-size:.58rem;font-weight:700;text-align:center;padding:0 4px;
-  line-height:1.2;color:rgba(255,255,255,.8);letter-spacing:.3px;pointer-events:none}
+.reel-marker{position:absolute;top:0;left:50%;transform:translateX(-50%);width:2px;height:100%;background:rgba(255,255,255,.9);z-index:10;pointer-events:none;box-shadow:0 0 8px #fff}
+.reel-marker::before{content:'▼';position:absolute;top:-2px;left:50%;transform:translateX(-50%);color:#fff;font-size:14px;line-height:1}
+.reel-marker::after{content:'▲';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);color:#fff;font-size:14px;line-height:1}
+.reel-strip{display:flex;align-items:center;height:100%;will-change:transform}
+.rc{flex-shrink:0;width:120px;height:140px;margin:0 5px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  background:var(--surf2);border:2px solid rgba(255,255,255,.08);position:relative;overflow:hidden;user-select:none}
+.rc .rc-emoji{font-size:2.6rem;line-height:1}
+.rc .rc-name{font-size:.58rem;font-weight:700;text-align:center;padding:0 4px;line-height:1.2;color:rgba(255,255,255,.8)}
 .rc .rc-bar{position:absolute;bottom:0;left:0;right:0;height:3px}
 .rc[data-r="common"]{border-color:var(--c-common)}.rc[data-r="common"] .rc-bar{background:var(--c-common)}
 .rc[data-r="uncommon"]{border-color:var(--c-uncommon)}.rc[data-r="uncommon"] .rc-bar{background:var(--c-uncommon)}
@@ -245,428 +143,482 @@ html,body{width:100%;height:100%;overflow:hidden;background:#07070f;font-family:
 .rc[data-r="epic"]{border-color:var(--c-epic)}.rc[data-r="epic"] .rc-bar{background:var(--c-epic)}
 .rc[data-r="legendary"]{border-color:var(--c-legend);background:rgba(235,75,75,.06)}.rc[data-r="legendary"] .rc-bar{background:var(--c-legend)}
 .rc[data-r="ultra"]{border-color:var(--c-ultra);background:rgba(255,215,0,.08)}.rc[data-r="ultra"] .rc-bar{background:var(--c-ultra);box-shadow:0 0 8px var(--c-ultra)}
-
-/* ─ REVEAL OVERLAY ─ */
-#reveal-overlay{
-  position:absolute;inset:0;background:rgba(5,5,18,.92);
-  display:none;align-items:center;justify-content:center;
-  z-index:50;backdrop-filter:blur(6px);
-}
+#reveal-overlay{position:absolute;inset:0;background:rgba(5,5,18,.92);display:none;align-items:center;justify-content:center;z-index:50;backdrop-filter:blur(6px)}
 #reveal-overlay.open{display:flex}
-.reveal-inner{
-  display:flex;flex-direction:column;align-items:center;gap:14px;
-  padding:30px 24px;position:relative;text-align:center;max-width:320px;
-}
-.reveal-rays-wrap{
-  position:absolute;width:380px;height:380px;top:50%;left:50%;
-  transform:translate(-50%,-50%);pointer-events:none;
-}
-.reveal-rays{
-  width:100%;height:100%;border-radius:50%;
-  background:conic-gradient(
-    var(--rarity-color) 0deg,transparent 8deg,transparent 22deg,
-    var(--rarity-color) 30deg,transparent 38deg,transparent 52deg,
-    var(--rarity-color) 60deg,transparent 68deg,transparent 82deg,
-    var(--rarity-color) 90deg,transparent 98deg,transparent 112deg,
-    var(--rarity-color) 120deg,transparent 128deg,transparent 142deg,
-    var(--rarity-color) 150deg,transparent 158deg,transparent 172deg,
-    var(--rarity-color) 180deg,transparent 188deg,transparent 202deg,
-    var(--rarity-color) 210deg,transparent 218deg,transparent 232deg,
-    var(--rarity-color) 240deg,transparent 248deg,transparent 262deg,
-    var(--rarity-color) 270deg,transparent 278deg,transparent 292deg,
-    var(--rarity-color) 300deg,transparent 308deg,transparent 322deg,
-    var(--rarity-color) 330deg,transparent 338deg,transparent 352deg,
-    var(--rarity-color) 360deg
-  );
-  opacity:.18;animation:spin 10s linear infinite;
-}
-.reveal-glow{
-  position:absolute;width:220px;height:220px;top:50%;left:50%;
-  transform:translate(-50%,-50%);border-radius:50%;
-  background:radial-gradient(circle,var(--rarity-color) 0%,transparent 70%);
-  opacity:.25;animation:pulse-glow 1.5s ease-in-out infinite;pointer-events:none;
-}
-.reveal-emoji-big{
-  font-size:5rem;line-height:1;
-  filter:drop-shadow(0 0 20px var(--rarity-color));
-  animation:pop-in .5s cubic-bezier(.34,1.56,.64,1) forwards;
-  z-index:2;position:relative;
-}
-.reveal-name{font-size:1.1rem;font-weight:900;color:#fff;z-index:2;position:relative;letter-spacing:.5px}
-.reveal-rarity-badge{
-  padding:4px 16px;border-radius:20px;font-size:.7rem;font-weight:800;letter-spacing:3px;
-  border:2px solid var(--rarity-color);color:var(--rarity-color);
-  z-index:2;position:relative;text-transform:uppercase;
-  background:rgba(0,0,0,.5);
-}
+.reveal-inner{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px;position:relative;text-align:center;max-width:320px}
+.reveal-rays-wrap{position:absolute;width:380px;height:380px;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.reveal-rays{width:100%;height:100%;border-radius:50%;opacity:.18;animation:spin 10s linear infinite}
+.reveal-glow{position:absolute;width:220px;height:220px;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;opacity:.25;animation:pulse-glow 1.5s ease-in-out infinite}
+.reveal-emoji-big{font-size:5rem;line-height:1;filter:drop-shadow(0 0 20px var(--rarity-color));animation:pop-in .5s cubic-bezier(.34,1.56,.64,1) forwards;z-index:2;position:relative}
+.reveal-name{font-size:1.1rem;font-weight:900;color:#fff;z-index:2;position:relative}
+.reveal-rarity-badge{padding:4px 16px;border-radius:20px;font-size:.7rem;font-weight:800;letter-spacing:3px;border:2px solid;z-index:2;position:relative;text-transform:uppercase;background:rgba(0,0,0,.5)}
 .reveal-value{color:var(--muted);font-size:.78rem;z-index:2;position:relative}
-.reveal-brand{
-  font-size:.7rem;color:var(--muted);z-index:2;position:relative;
-  background:rgba(255,255,255,.05);border:1px solid var(--border);
-  border-radius:6px;padding:4px 10px;
-}
+.reveal-brand{font-size:.7rem;color:var(--muted);z-index:2;position:relative;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;padding:4px 10px}
 .reveal-brand span{color:var(--accent);font-weight:700}
 
-/* ──────────────── INVENTORY ──────────────── */
-#s-inv{gap:16px}
-.inv-header{width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
-.inv-header h2{font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+/* ── INVENTORY ── */
+.inv-header{width:100%;max-width:600px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .inv-stats-row{font-size:.78rem;color:var(--muted)}
-.inv-grid{
-  width:100%;display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
-  gap:10px;max-width:600px;
-}
-.inv-card{
-  background:var(--surf2);border-radius:10px;padding:12px 6px 10px;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  border:2px solid rgba(255,255,255,.08);cursor:pointer;
-  transition:transform .15s,border-color .15s,box-shadow .15s;
-  position:relative;overflow:hidden;
-}
-.inv-card:hover{transform:translateY(-4px)}
+.inv-grid{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;max-width:600px}
+.inv-card{background:var(--surf2);border-radius:10px;padding:12px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:6px;
+  border:2px solid rgba(255,255,255,.08);transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.inv-card:hover{transform:translateY(-4px);box-shadow:0 4px 18px var(--rarity-color)}
 .inv-card[data-r="common"]{border-color:rgba(158,163,172,.35)}
-.inv-card[data-r="common"]:hover{border-color:var(--c-common);box-shadow:0 4px 15px rgba(158,163,172,.3)}
-.inv-card[data-r="uncommon"]{border-color:rgba(94,152,217,.35)}
-.inv-card[data-r="uncommon"]:hover{border-color:var(--c-uncommon);box-shadow:0 4px 15px rgba(94,152,217,.3)}
-.inv-card[data-r="rare"]{border-color:rgba(136,71,255,.4)}
-.inv-card[data-r="rare"]:hover{border-color:var(--c-rare);box-shadow:0 4px 20px rgba(136,71,255,.4)}
-.inv-card[data-r="epic"]{border-color:rgba(209,78,255,.4)}
-.inv-card[data-r="epic"]:hover{border-color:var(--c-epic);box-shadow:0 4px 20px rgba(209,78,255,.4)}
-.inv-card[data-r="legendary"]{border-color:rgba(235,75,75,.4)}
-.inv-card[data-r="legendary"]:hover{border-color:var(--c-legend);box-shadow:0 4px 20px rgba(235,75,75,.4)}
-.inv-card[data-r="ultra"]{border-color:rgba(255,215,0,.5);background:rgba(255,215,0,.06)}
-.inv-card[data-r="ultra"]:hover{border-color:var(--c-ultra);box-shadow:0 4px 25px rgba(255,215,0,.5)}
+.inv-card[data-r="uncommon"]{border-color:rgba(94,152,217,.4)}
+.inv-card[data-r="rare"]{border-color:rgba(136,71,255,.45)}
+.inv-card[data-r="epic"]{border-color:rgba(209,78,255,.45)}
+.inv-card[data-r="legendary"]{border-color:rgba(235,75,75,.45)}
+.inv-card[data-r="ultra"]{border-color:rgba(255,215,0,.55);background:rgba(255,215,0,.06)}
 .inv-emoji{font-size:2.2rem;line-height:1}
 .inv-name{font-size:.6rem;font-weight:700;text-align:center;line-height:1.3;color:rgba(255,255,255,.8)}
 .inv-rarity-dot{width:8px;height:8px;border-radius:50%}
-.inv-brand{font-size:.52rem;color:var(--muted);text-align:center;opacity:.7}
-.inv-scrap-btn{
-  position:absolute;top:4px;right:4px;background:rgba(0,0,0,.5);
-  border:1px solid rgba(255,255,255,.1);color:var(--muted);
-  border-radius:4px;font-size:.6rem;padding:2px 5px;cursor:pointer;
-  opacity:0;transition:opacity .2s;
-}
-.inv-card:hover .inv-scrap-btn{opacity:1}
+.inv-brand{font-size:.52rem;color:var(--muted);text-align:center;opacity:.8}
+.inv-scrap-btn{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);color:var(--muted);border-radius:4px;font-size:.6rem;padding:2px 5px;cursor:pointer}
 .inv-scrap-btn:hover{color:#ff6060;border-color:#602020}
-.inv-empty{
-  grid-column:1/-1;text-align:center;padding:40px 20px;
-  color:var(--muted);font-size:.9rem;
-}
+.inv-empty{grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--muted);font-size:.9rem}
 .inv-empty-icon{font-size:3rem;margin-bottom:10px}
-.common-scrap-bar{
-  width:100%;max-width:600px;background:var(--surf);border:1px solid var(--border);
-  border-radius:10px;padding:12px 16px;display:flex;align-items:center;
-  justify-content:space-between;gap:12px;font-size:.8rem;
-}
+.common-scrap-bar{width:100%;max-width:600px;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.8rem}
 .common-scrap-bar b{color:var(--c-common)}
 
-/* ──────────────── STATS ──────────────── */
-#s-stats{gap:16px}
-.stats-header{width:100%;display:flex;align-items:center;gap:12px}
-.stats-grid{width:100%;max-width:480px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.stat-card{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
-.stat-val{font-size:1.8rem;font-weight:900;color:var(--accent)}
-.stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
-.drop-rates{width:100%;max-width:480px;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:16px}
-.drop-rates h3{font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+/* ── STATS ── */
+.stats-grid{width:100%;max-width:480px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-card{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center}
+.stat-val{font-size:1.6rem;font-weight:900;color:var(--accent)}
+.stat-lbl{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.panel{width:100%;max-width:480px;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:14px}
+.panel h3{font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
 .rate-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .rate-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .rate-name{flex:1;font-size:.82rem;font-weight:600}
-.rate-pct{font-size:.8rem;color:var(--muted);font-weight:700;margin-left:auto}
+.rate-pct{font-size:.8rem;color:var(--muted);font-weight:700}
 .rate-bar-wrap{width:100px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
 .rate-bar-fill{height:100%;border-radius:3px}
-.ad-timer-table{width:100%;max-width:480px;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:16px}
-.ad-timer-table h3{font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
 .adt-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
 .adt-row:last-child{border-bottom:none}
 .adt-dot{width:10px;height:10px;border-radius:50%}
 .adt-rarity{flex:1;font-size:.82rem;font-weight:600}
 .adt-time{font-weight:700;font-size:.85rem}
-.adt-active{
-  background:rgba(255,215,0,.08);border-radius:6px;padding:2px 6px;
-  color:var(--gold);border:1px solid rgba(255,215,0,.3);
-}
+.adt-active{background:rgba(255,215,0,.08);border-radius:6px;padding:2px 6px;color:var(--gold);border:1px solid rgba(255,215,0,.3)}
 
-/* ──────────────── DAILY MODAL ──────────────── */
-#daily-modal{
-  position:fixed;inset:0;background:rgba(5,5,18,.85);
-  display:none;align-items:center;justify-content:center;z-index:800;
-  backdrop-filter:blur(8px);
-}
+/* ── DAILY MODAL ── */
+#daily-modal{position:fixed;inset:0;background:rgba(5,5,18,.85);display:none;align-items:center;justify-content:center;z-index:800;backdrop-filter:blur(8px)}
 #daily-modal.open{display:flex}
-.daily-inner{
-  background:var(--surf);border:1px solid rgba(255,215,0,.3);
-  border-radius:16px;padding:32px 28px;text-align:center;
-  max-width:340px;width:90%;
-  box-shadow:0 0 60px rgba(255,215,0,.2);
-  animation:pop-in .4s cubic-bezier(.34,1.56,.64,1) forwards;
-}
+.daily-inner{background:var(--surf);border:1px solid rgba(255,215,0,.3);border-radius:16px;padding:30px 26px;text-align:center;max-width:340px;width:90%;
+  box-shadow:0 0 60px rgba(255,215,0,.2);animation:pop-in .4s cubic-bezier(.34,1.56,.64,1) forwards}
 .daily-icon{font-size:3.5rem;margin-bottom:8px}
 .daily-title{font-size:1.3rem;font-weight:900;color:var(--gold);margin-bottom:6px}
-.daily-streak{font-size:.85rem;color:var(--muted);margin-bottom:16px}
-.daily-reward{
-  font-size:2rem;font-weight:900;color:var(--accent);
-  margin:12px 0;display:flex;align-items:center;justify-content:center;gap:8px;
-}
+.daily-streak{font-size:.85rem;color:var(--muted);margin-bottom:12px}
+.daily-reward{font-size:1.8rem;font-weight:900;color:var(--accent);margin:10px 0;display:flex;align-items:center;justify-content:center;gap:12px}
 
-/* ──────────────── ANIMATIONS ──────────────── */
+/* ── GAME COMMON ── */
+.game-hdr{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.screen-title{font-size:1rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.game-panel{width:100%;max-width:480px;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.bet-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.bet-row label{font-size:.72rem;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-right:2px}
+.bet-input{width:90px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:#08081c;color:#7dffb0;font-weight:800;font-size:.95rem;text-align:center}
+.chip{padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surf2);color:var(--txt);font-size:.72rem;font-weight:800;cursor:pointer}
+.chip:hover{border-color:rgba(255,255,255,.3)}
+.result-msg{min-height:24px;text-align:center;font-weight:800;font-size:1rem;letter-spacing:.5px}
+.result-msg.win{color:var(--green)}.result-msg.lose{color:var(--red)}.result-msg.push{color:var(--gold)}
+
+/* lobby */
+.game-grid{width:100%;max-width:480px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.game-card{background:linear-gradient(160deg,var(--surf2),var(--surf));border:1px solid var(--border);border-radius:14px;padding:18px 10px;display:flex;flex-direction:column;
+  align-items:center;gap:6px;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;text-align:center}
+.game-card:hover{transform:translateY(-4px);border-color:var(--gc,#ff8800);box-shadow:0 6px 24px -6px var(--gc,#ff8800)}
+.game-card .gi{font-size:2.6rem;line-height:1}
+.game-card .gn{font-weight:900;font-size:.9rem;letter-spacing:1px}
+.game-card .gm{font-size:.68rem;color:var(--muted)}
+.game-card.wide{grid-column:1/-1}
+
+/* playing cards */
+.cards-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;min-height:88px}
+.pcard{width:58px;height:84px;border-radius:8px;background:#fdfdfd;color:#111;position:relative;box-shadow:0 4px 12px rgba(0,0,0,.5);animation:deal .3s ease;user-select:none}
+.pcard.red{color:#d11}
+.pcard .pr{position:absolute;top:4px;left:6px;font-weight:900;font-size:.95rem;line-height:1}
+.pcard .pr2{position:absolute;bottom:4px;right:6px;font-weight:900;font-size:.95rem;line-height:1;transform:rotate(180deg)}
+.pcard .ps{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.9rem}
+.pcard.back{background:repeating-linear-gradient(45deg,#3a0ca3,#3a0ca3 6px,#4c1bd1 6px,#4c1bd1 12px);border:3px solid #fff}
+.pcard.big{width:92px;height:132px}
+.pcard.big .pr,.pcard.big .pr2{font-size:1.4rem}
+.pcard.big .ps{font-size:3rem}
+@keyframes deal{from{transform:translateY(-30px) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+.hand-lbl{font-size:.72rem;color:var(--muted);font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center}
+.hand-lbl b{color:var(--txt);font-size:.9rem}
+
+/* roulette */
+.wheel-wrap{position:relative;width:260px;height:260px;margin:4px auto}
+.wheel{--lr:106px;width:100%;height:100%;border-radius:50%;border:8px solid #6b4a1f;box-shadow:0 0 0 3px #d4a64a,0 10px 40px rgba(0,0,0,.6);position:relative}
+.wheel span{position:absolute;left:50%;top:50%;font-size:.6rem;font-weight:800;color:#fff;width:16px;text-align:center}
+.wheel-hub{position:absolute;inset:32%;border-radius:50%;background:radial-gradient(circle,#d4a64a,#6b4a1f);display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;font-weight:900;color:#fff;text-shadow:0 2px 4px #000;box-shadow:0 0 20px rgba(0,0,0,.6) inset;z-index:3}
+.wheel-pointer{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;
+  border-top:22px solid #fff;z-index:4;filter:drop-shadow(0 2px 3px #000)}
+.rl-bets{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rl-bet{padding:9px 4px;border-radius:7px;border:2px solid transparent;background:var(--surf2);color:var(--txt);font-weight:800;font-size:.72rem;cursor:pointer}
+.rl-bet small{display:block;font-size:.6rem;opacity:.6}
+.rl-bet.sel{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,0,.4)}
+.rl-nums{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}
+.rl-num{aspect-ratio:1;border:2px solid transparent;border-radius:4px;font-size:.62rem;font-weight:800;color:#fff;cursor:pointer;padding:0}
+.rl-num.red{background:#c0392b}.rl-num.black{background:#1d1d1d}.rl-num.green{background:#0a8f3c}
+.rl-num.sel{border-color:var(--gold);transform:scale(1.12)}
+.rl-num.green{aspect-ratio:auto}
+.rl-hist{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;min-height:24px}
+.rl-hist i{font-style:normal;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800}
+
+/* race */
+.track{position:relative;width:100%;border-radius:10px;overflow:hidden;background:repeating-linear-gradient(90deg,#1b4d2a 0 40px,#1f5a31 40px 80px)}
+.lane{position:relative;height:42px;border-bottom:1px dashed rgba(255,255,255,.15)}
+.lane:last-child{border-bottom:none}
+.lane .lnum{position:absolute;left:4px;top:50%;transform:translateY(-50%);font-size:.6rem;font-weight:800;color:rgba(255,255,255,.4)}
+.runner{position:absolute;top:50%;left:0;font-size:1.8rem;line-height:1;transform:translateY(-50%) scaleX(-1);will-change:left}
+.finish{position:absolute;top:0;bottom:0;right:34px;width:6px;background:repeating-linear-gradient(0deg,#fff 0 6px,#111 6px 12px);opacity:.85;z-index:1}
+.race-picks{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rpick{padding:8px 4px;border-radius:8px;border:2px solid transparent;background:var(--surf2);color:var(--txt);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.rpick .re{font-size:1.4rem}.rpick .rn{font-size:.68rem;font-weight:800}.rpick .ro{font-size:.66rem;color:var(--gold);font-weight:800}
+.rpick.sel{border-color:var(--gold);box-shadow:0 0 12px rgba(255,215,0,.4)}
+
+/* hi-lo */
+.hilo-table{display:flex;align-items:center;justify-content:center;gap:18px;min-height:140px}
+.hilo-prev{opacity:.45;transform:scale(.8)}
+.streak-row{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.streak-pill{padding:5px 12px;border-radius:14px;background:var(--surf2);border:1px solid var(--border);font-size:.78rem;font-weight:800}
+.streak-pill b{color:var(--gold)}
+
+/* minesweeper */
+.ms-bar{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ms-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;width:100%;max-width:360px;margin:0 auto;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.ms-cell{aspect-ratio:1;border-radius:5px;background:linear-gradient(145deg,#2c2c5e,#1e1e44);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:1rem;cursor:pointer;transition:background .12s}
+.ms-cell:hover{background:#34346e}
+.ms-cell.rev{background:#0c0c22;border-color:rgba(255,255,255,.05);cursor:default}
+.ms-cell.boom{background:#7a1010}
+.ms-cell.n1{color:#3d7bff}.ms-cell.n2{color:#2ecc71}.ms-cell.n3{color:#ff4040}.ms-cell.n4{color:#2438a8}
+.ms-cell.n5{color:#a31818}.ms-cell.n6{color:#17a2a2}.ms-cell.n7{color:#000;text-shadow:0 0 2px #fff}.ms-cell.n8{color:#888}
+
+/* ── ANIMATIONS ── */
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse-glow{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.25}50%{transform:translate(-50%,-50%) scale(1.15);opacity:.4}}
 @keyframes pop-in{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
 @keyframes shake{0%,100%{transform:translate(0,0)}15%{transform:translate(-9px,4px)}30%{transform:translate(9px,-4px)}45%{transform:translate(-7px,3px)}60%{transform:translate(7px,-3px)}75%{transform:translate(-4px,2px)}90%{transform:translate(4px,-2px)}}
 @keyframes flash-out{0%{opacity:.85}100%{opacity:0}}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes winner-shine{0%,100%{box-shadow:0 0 0 2px var(--rarity-color)}50%{box-shadow:0 0 25px 6px var(--rarity-color)}}
 .shake{animation:shake .6s ease!important}
 .float{animation:float 3s ease-in-out infinite}
-#winner-highlight{animation:winner-shine 1s ease-in-out infinite}
-
-/* ──────────────── MISC UI ──────────────── */
-.screen-title{font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
-.divider{width:100%;max-width:480px;height:1px;background:var(--border);margin:4px 0}
-.toast{
-  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
-  background:rgba(30,30,60,.95);border:1px solid var(--border);
-  border-radius:10px;padding:10px 20px;font-size:.85rem;font-weight:600;
-  z-index:950;animation:toast-in .3s ease;white-space:nowrap;
-  pointer-events:none;
-}
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:rgba(30,30,60,.96);border:1px solid var(--border);border-radius:10px;padding:10px 18px;
+  font-size:.85rem;font-weight:600;z-index:950;animation:toast-in .3s ease;white-space:nowrap;pointer-events:none;transition:opacity .3s}
 @keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-.text-gold{color:var(--gold)}
 .text-muted{color:var(--muted)}
 .mt-8{margin-top:8px}
-.rarity-pill{
-  display:inline-block;padding:2px 8px;border-radius:10px;font-size:.65rem;
-  font-weight:800;letter-spacing:2px;text-transform:uppercase;border:1px solid currentColor;
-}
-/* responsive */
 @media(max-width:400px){
   .inv-grid{grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px}
-  .case-body{width:140px;height:140px}.case-icon{font-size:50px}
+  .case-body{width:135px;height:135px}.case-icon{font-size:48px}
+  .logo{font-size:1rem;letter-spacing:1px}
+  .keys-badge,.coins-badge{padding:3px 8px;font-size:.8rem}
+  .wheel-wrap{width:230px;height:230px}.wheel{--lr:92px}
+  .pcard{width:50px;height:74px}
 }
 </style>
 </head>
-<body>
 
+<body>
 <canvas id="ptcl"></canvas>
 
 <div id="app">
 
-  <!-- ── DAILY BONUS MODAL ── -->
+  <!-- DAILY BONUS MODAL -->
   <div id="daily-modal">
     <div class="daily-inner">
       <div class="daily-icon">🎁</div>
       <div class="daily-title">DAILY BONUS!</div>
       <div id="daily-streak" class="daily-streak"></div>
       <div id="daily-reward" class="daily-reward"></div>
-      <div class="text-muted mt-8" style="font-size:.78rem">Come back tomorrow for a bigger bonus!</div>
-      <button class="btn btn-primary mt-8" style="margin-top:16px" onclick="closeDailyModal()">CLAIM & PLAY</button>
+      <div class="text-muted" style="font-size:.78rem">Come back tomorrow for a bigger bonus!</div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="closeDailyModal()">CLAIM &amp; PLAY</button>
     </div>
   </div>
 
-  <!-- ── HEADER ── -->
+  <!-- HEADER -->
   <header id="hdr">
     <div class="logo">🎰 AdDrop</div>
-    <div class="keys-badge"><span class="ki">🗝️</span><span id="keys-count">0</span></div>
+    <div class="wallet">
+      <div class="coins-badge" id="coins-badge">💰 <span id="coins-count">0</span></div>
+      <div class="keys-badge" id="keys-badge">🗝️ <span id="keys-count">0</span></div>
+    </div>
   </header>
 
-  <!-- ═══════════════════ HOME SCREEN ═══════════════════ -->
+  <!-- ═════════ HOME ═════════ -->
   <div id="s-home" class="screen active">
     <div class="home-hero">
       <div class="case-wrap float" onclick="goTo('s-open')">
-        <div class="case-body">
-          <span class="case-icon">⭐</span>
-          <span class="case-label">DROP CASE</span>
-        </div>
+        <div class="case-body"><span class="case-icon">⭐</span><span class="case-label">DROP CASE</span></div>
       </div>
       <div class="home-keys-info">
-        <h3>Watch ads · Earn keys · Open cases</h3>
+        <h3>Watch ads · Earn keys &amp; coins · Play</h3>
         <div id="home-timer-badge" class="ad-timer-badge">⏱ Ad duration: 30s</div>
       </div>
     </div>
     <div class="home-actions">
-      <button class="btn btn-primary" onclick="goTo('s-ad')">
-        📺 WATCH AD &nbsp;<span class="sub-label" id="home-ad-sec">30s</span>
-      </button>
-      <button class="btn btn-open" id="btn-open-home" onclick="goTo('s-open')">
-        🎲 OPEN CASE &nbsp;<span class="sub-label">1 🗝️</span>
-      </button>
-      <button class="btn btn-secondary" onclick="goTo('s-inv')">🎒 INVENTORY</button>
-      <button class="btn btn-secondary" onclick="goTo('s-stats')">📊 STATS &amp; DROP RATES</button>
+      <button class="btn btn-primary" onclick="startAdFrom('s-home')">📺 WATCH AD <span class="sub-label" id="home-ad-sec">30s · +1🗝️ +100💰</span></button>
+      <button class="btn btn-open" id="btn-open-home" onclick="goTo('s-open')">🎲 OPEN CASE <span class="sub-label">1 🗝️</span></button>
+      <button class="btn btn-green" onclick="goTo('s-games')">🎲 CASINO GAMES <span class="sub-label">use 💰</span></button>
+      <div class="home-row">
+        <button class="btn btn-secondary" onclick="goTo('s-inv')">🎒 INVENTORY</button>
+        <button class="btn btn-secondary" onclick="goTo('s-stats')">📊 STATS</button>
+      </div>
     </div>
+    <div class="ad-slot"></div>
   </div>
 
-  <!-- ═══════════════════ AD SCREEN ═══════════════════ -->
+  <!-- ═════════ WATCH AD ═════════ -->
   <div id="s-ad" class="screen">
     <div class="ad-screen-inner">
       <div style="width:100%;display:flex;align-items:center;gap:12px">
-        <button class="btn-back" onclick="goTo('s-home')">← Back</button>
-        <span class="screen-title">Watch Ad → Earn Key</span>
+        <button class="btn-back" onclick="cancelAd()">← Back</button>
+        <span class="screen-title">Watch Ad → Earn Rewards</span>
       </div>
-
-      <!-- Ad container — real ad loads here when configured -->
       <div class="ad-box" id="ad-box">
-        <div class="ad-demo-tag" id="ad-network-tag">[DEMO AD]</div>
-        <div class="ad-brand" id="ad-brand-name">EXAMPLE CO</div>
-        <div class="ad-tagline" id="ad-tagline">Your ad could appear here</div>
-        <!-- Real ad unit injected by JS if configured -->
+        <div class="ad-net-tag" id="ad-network-tag">[ADSENSE]</div>
         <div id="ad-unit-slot"></div>
+        <div class="ad-fallback" id="ad-fallback">
+          <div class="ad-brand" id="ad-brand-name">SPONSORED</div>
+          <div class="ad-tagline">Advertisement — thanks for supporting AdDrop!</div>
+        </div>
       </div>
-
-      <!-- Countdown ring -->
       <div class="ad-timer-ring">
-        <svg width="100" height="100" viewBox="0 0 100 100">
+        <svg width="96" height="96" viewBox="0 0 100 100">
           <circle class="ring-bg" cx="50" cy="50" r="45"/>
           <circle class="ring-fg" id="ring-fg" cx="50" cy="50" r="45"/>
         </svg>
         <div class="ad-secs" id="ad-secs">30</div>
       </div>
-
-      <div class="ad-earning-info">Watching earns you <b>1 🗝️ Key</b></div>
-
-      <div class="ad-rarity-tip" id="ad-rarity-tip">
-        🔥 Pull rarer items to shorten your ads!
-      </div>
-
-      <button class="btn btn-primary" id="btn-skip" onclick="skipAd()" style="display:none">
-        ⚡ SKIP (debug)
-      </button>
+      <div class="ad-earning-info">Watching earns you <b>+1 🗝️ Key</b> and <b>+100 💰 Coins</b></div>
+      <div class="ad-rarity-tip" id="ad-rarity-tip">🔥 Pull rarer items to shorten your ads!</div>
     </div>
   </div>
 
-  <!-- ═══════════════════ OPENING SCREEN ═══════════════════ -->
-  <div id="s-open" class="screen" style="padding:0">
+  <!-- ═════════ CASE OPENING ═════════ -->
+  <div id="s-open" class="screen">
     <div class="open-header">
-      <button class="btn-back" onclick="goHome()">← Back</button>
+      <button class="btn-back" onclick="goTo('s-home')">← Home</button>
       <span class="screen-title">Drop Case</span>
       <div class="keys-badge" style="font-size:.85rem">🗝️ <span id="open-keys">0</span></div>
     </div>
-
-    <!-- Pre-roll -->
-    <div id="open-preroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px 16px;width:100%">
-      <div class="case-wrap" id="open-case-btn" onclick="startOpening()">
-        <div class="case-body" style="width:200px;height:200px">
-          <span class="case-icon" style="font-size:78px">⭐</span>
-          <span class="case-label">CLICK TO OPEN</span>
-        </div>
+    <div id="open-preroll">
+      <div class="case-wrap" onclick="startOpening()">
+        <div class="case-body" style="width:190px;height:190px"><span class="case-icon" style="font-size:74px">⭐</span><span class="case-label">CLICK TO OPEN</span></div>
       </div>
-      <div id="open-no-keys" class="text-muted" style="text-align:center;font-size:.85rem;display:none">
-        You need a key to open a case.<br>Watch an ad to earn one!
-      </div>
-      <button class="btn btn-primary" style="max-width:220px;display:none" id="open-watch-btn" onclick="goTo('s-ad')">
-        📺 Watch Ad First
-      </button>
+      <div id="open-no-keys" class="text-muted" style="text-align:center;font-size:.85rem;display:none">You need a key to open a case.<br>Watch an ad to earn one!</div>
+      <button class="btn btn-primary" style="max-width:220px;display:none" id="open-watch-btn" onclick="startAdFrom('s-open')">📺 Watch Ad First</button>
+      <div class="ad-slot" style="margin-top:6px"></div>
     </div>
-
-    <!-- Rolling area (shown during spin) -->
-    <div id="open-rolling" style="display:none;flex-direction:column;width:100%;gap:16px;padding:20px 0">
+    <div id="open-rolling">
       <div class="reel-section">
-        <div class="reel-container">
-          <div class="reel-marker"></div>
-          <div id="reel-strip" class="reel-strip"></div>
-        </div>
+        <div class="reel-container"><div class="reel-marker"></div><div id="reel-strip" class="reel-strip"></div></div>
       </div>
     </div>
-
-    <!-- Reveal overlay (inside opening screen) -->
     <div id="reveal-overlay">
       <div class="reveal-inner">
-        <div class="reveal-rays-wrap">
-          <div class="reveal-rays" id="reveal-rays"></div>
-          <div class="reveal-glow" id="reveal-glow"></div>
-        </div>
+        <div class="reveal-rays-wrap"><div class="reveal-rays" id="reveal-rays"></div><div class="reveal-glow" id="reveal-glow"></div></div>
         <div class="reveal-emoji-big" id="rev-emoji"></div>
         <div class="reveal-name" id="rev-name"></div>
         <div class="reveal-rarity-badge" id="rev-rarity"></div>
         <div class="reveal-value" id="rev-value"></div>
         <div class="reveal-brand" id="rev-brand"></div>
-        <button class="btn btn-primary mt-8" onclick="collectItem()" style="max-width:240px;margin-top:8px">
-          ✅ ADD TO INVENTORY
-        </button>
-        <button class="btn btn-secondary" onclick="openAgain()" style="max-width:240px">
-          🔁 OPEN AGAIN (1 🗝️)
-        </button>
+        <button class="btn btn-primary" onclick="collectItem()" style="max-width:240px;margin-top:8px">✅ ADD TO INVENTORY</button>
+        <button class="btn btn-secondary" onclick="openAgain()" style="max-width:240px">🔁 OPEN AGAIN (1 🗝️)</button>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════════ INVENTORY SCREEN ═══════════════════ -->
+  <!-- ═════════ GAMES LOBBY ═════════ -->
+  <div id="s-games" class="screen">
+    <div class="game-hdr"><span class="screen-title">🎲 Casino</span><span class="text-muted" style="font-size:.75rem">Play with 💰 coins</span></div>
+    <div class="game-grid">
+      <div class="game-card" style="--gc:#e84343" onclick="goTo('s-roulette')"><span class="gi">🎡</span><span class="gn">ROULETTE</span><span class="gm">Min bet 10 💰 · up to 36x</span></div>
+      <div class="game-card" style="--gc:#3d8bff" onclick="goTo('s-blackjack')"><span class="gi">🃏</span><span class="gn">BLACKJACK</span><span class="gm">Min bet 10 💰 · BJ pays 3:2</span></div>
+      <div class="game-card" style="--gc:#2ecc71" onclick="goTo('s-race')"><span class="gi">🏇</span><span class="gn">ANIMAL RACE</span><span class="gm">Min bet 10 💰 · up to 6:1</span></div>
+      <div class="game-card" style="--gc:#ffd700" onclick="goTo('s-hilo')"><span class="gi">🔼</span><span class="gn">HIGHER / LOWER</span><span class="gm">Min bet 10 💰 · streak 2x</span></div>
+      <div class="game-card wide" style="--gc:#d14eff" onclick="goTo('s-mine')"><span class="gi">💣</span><span class="gn">MINESWEEPER</span><span class="gm">Free to play · Win +300 💰 · Mine −50 💰</span></div>
+    </div>
+    <div class="gad show" style="max-width:480px"><span>📺 Low on coins? Watch an ad for <b>+100 💰</b> &amp; +1 🗝️</span><button class="btn btn-primary btn-sm" onclick="startAdFrom('s-games')">Watch</button></div>
+    <div class="ad-slot"></div>
+  </div>
+
+  <!-- ═════════ ROULETTE ═════════ -->
+  <div id="s-roulette" class="screen">
+    <div class="game-hdr"><button class="btn-back" onclick="goTo('s-games')">← Games</button><span class="screen-title">🎡 Roulette</span><span></span></div>
+    <div class="wheel-wrap">
+      <div class="wheel-pointer"></div>
+      <div class="wheel" id="rl-wheel"></div>
+      <div class="wheel-hub" id="rl-hub">?</div>
+    </div>
+    <div class="rl-hist" id="rl-hist"></div>
+    <div class="result-msg" id="rl-msg">Pick a bet and spin!</div>
+    <div class="game-panel">
+      <div class="rl-bets" id="rl-bets"></div>
+      <div class="hand-lbl">Single number · pays 36x</div>
+      <div class="rl-nums" id="rl-nums"></div>
+      <div class="bet-ctl" data-id="rl-bet"></div>
+      <button class="btn btn-red" id="rl-spin" onclick="rlSpin()">🎡 SPIN</button>
+    </div>
+    <div class="gad" id="gad-roulette"><span>🎯 Watch an ad for +100 💰 bonus!</span><button class="btn btn-primary btn-sm" onclick="startAdFrom('s-roulette')">Watch</button></div>
+    <div class="ad-slot"></div>
+  </div>
+
+  <!-- ═════════ BLACKJACK ═════════ -->
+  <div id="s-blackjack" class="screen">
+    <div class="game-hdr"><button class="btn-back" onclick="goTo('s-games')">← Games</button><span class="screen-title">🃏 Blackjack</span><span></span></div>
+    <div class="game-panel" style="background:radial-gradient(ellipse at center,#0f5a34,#08361f);border-color:#1b7a48">
+      <div class="hand-lbl">Dealer <b id="bj-dval"></b></div>
+      <div class="cards-row" id="bj-dealer"></div>
+      <div class="result-msg" id="bj-msg">Place your bet</div>
+      <div class="cards-row" id="bj-player"></div>
+      <div class="hand-lbl">You <b id="bj-pval"></b></div>
+    </div>
+    <div class="game-panel">
+      <div id="bj-betarea" style="display:flex;flex-direction:column;gap:10px">
+        <div class="bet-ctl" data-id="bj-bet"></div>
+        <button class="btn btn-blue" onclick="bjDeal()">🃏 DEAL</button>
+      </div>
+      <div id="bj-actions" style="display:none;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <button class="btn btn-green" onclick="bjHit()">HIT</button>
+        <button class="btn btn-red" onclick="bjStand()">STAND</button>
+        <button class="btn btn-primary" id="bj-double" onclick="bjDouble()">DOUBLE</button>
+      </div>
+    </div>
+    <div class="gad" id="gad-blackjack"><span>🎯 Watch an ad for +100 💰 bonus!</span><button class="btn btn-primary btn-sm" onclick="startAdFrom('s-blackjack')">Watch</button></div>
+    <div class="ad-slot"></div>
+  </div>
+
+  <!-- ═════════ ANIMAL RACE ═════════ -->
+  <div id="s-race" class="screen">
+    <div class="game-hdr"><button class="btn-back" onclick="goTo('s-games')">← Games</button><span class="screen-title">🏇 Animal Race</span><span></span></div>
+    <div class="game-panel" style="padding:8px">
+      <div class="track" id="race-track"><div class="finish"></div></div>
+    </div>
+    <div class="result-msg" id="race-msg">Pick a runner!</div>
+    <div class="game-panel">
+      <div class="race-picks" id="race-picks"></div>
+      <div class="text-muted" style="font-size:.7rem;text-align:center">Win pays bet × odds + your stake back · odds reset every race</div>
+      <div class="bet-ctl" data-id="race-bet"></div>
+      <button class="btn btn-green" id="race-go" onclick="raceStart()">🏁 START RACE</button>
+    </div>
+    <div class="gad" id="gad-race"><span>🎯 Watch an ad for +100 💰 bonus!</span><button class="btn btn-primary btn-sm" onclick="startAdFrom('s-race')">Watch</button></div>
+    <div class="ad-slot"></div>
+  </div>
+
+  <!-- ═════════ HIGHER / LOWER ═════════ -->
+  <div id="s-hilo" class="screen">
+    <div class="game-hdr"><button class="btn-back" onclick="goTo('s-games')">← Games</button><span class="screen-title">🔼 Higher / Lower</span><span></span></div>
+    <div class="game-panel" style="background:radial-gradient(ellipse at center,#23145c,#10102a)">
+      <div class="streak-row">
+        <span class="streak-pill">🔥 Streak <b id="hl-streak">0</b></span>
+        <span class="streak-pill">✖ Multiplier <b id="hl-mult">1x</b></span>
+        <span class="streak-pill">🏆 Best <b id="hl-best">0</b></span>
+      </div>
+      <div class="hilo-table"><div id="hl-prev" class="hilo-prev"></div><div id="hl-card"></div></div>
+      <div class="result-msg" id="hl-msg">Press START, then guess the next card</div>
+      <div class="text-muted" style="font-size:.68rem;text-align:center">Ace is high · Equal card counts as a win · 3+ streak = 1.5x · 5+ streak = 2x</div>
+    </div>
+    <div class="game-panel">
+      <div class="bet-ctl" data-id="hl-bet"></div>
+      <div id="hl-guess" style="display:none;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn btn-green" onclick="hlGuess('hi')">🔼 HIGHER</button>
+        <button class="btn btn-red" onclick="hlGuess('lo')">🔽 LOWER</button>
+      </div>
+      <button class="btn btn-primary" id="hl-start" onclick="hlStart()">▶ START</button>
+    </div>
+    <div class="gad" id="gad-hilo"><span>🎯 Watch an ad for +100 💰 bonus!</span><button class="btn btn-primary btn-sm" onclick="startAdFrom('s-hilo')">Watch</button></div>
+    <div class="ad-slot"></div>
+  </div>
+
+  <!-- ═════════ MINESWEEPER ═════════ -->
+  <div id="s-mine" class="screen">
+    <div class="game-hdr"><button class="btn-back" onclick="goTo('s-games')">← Games</button><span class="screen-title">💣 Minesweeper</span><span></span></div>
+    <div class="game-panel">
+      <div class="ms-bar">
+        <span class="streak-pill">💣 <b id="ms-left">10</b></span>
+        <button class="btn btn-secondary btn-sm" onclick="msNew()">🔄 New Game</button>
+        <span class="streak-pill">⏱ <b id="ms-time">0</b>s</span>
+      </div>
+      <div class="ms-grid" id="ms-grid"></div>
+      <div class="result-msg" id="ms-msg">Tap to reveal · Long-press / right-click to flag</div>
+      <div class="text-muted" style="font-size:.68rem;text-align:center">Clear all safe cells: <b style="color:#7dffb0">+300 💰</b> · Hit a mine: <b style="color:#ff6060">−50 💰</b></div>
+    </div>
+    <div class="gad" id="gad-mine"><span>🎯 Watch an ad for +100 💰 bonus!</span><button class="btn btn-primary btn-sm" onclick="startAdFrom('s-mine')">Watch</button></div>
+    <div class="ad-slot"></div>
+  </div>
+
+  <!-- ═════════ INVENTORY ═════════ -->
   <div id="s-inv" class="screen">
     <div class="inv-header">
-      <div>
-        <div class="screen-title">INVENTORY</div>
-        <div class="inv-stats-row" id="inv-stats-row"></div>
-      </div>
-      <button class="btn-back" onclick="goTo('s-home')">← Home</button>
+      <div><div class="screen-title">INVENTORY</div><div class="inv-stats-row" id="inv-stats-row"></div></div>
     </div>
     <div id="common-scrap-bar" class="common-scrap-bar" style="display:none">
       <span>🗑️ Common items: <b id="common-count">0</b> &nbsp;(5 = 1 🗝️)</span>
       <button class="btn btn-sm btn-secondary" onclick="scrapAllCommons()">Bulk Scrap</button>
     </div>
     <div class="inv-grid" id="inv-grid"></div>
+    <div class="ad-slot"></div>
   </div>
 
-  <!-- ═══════════════════ STATS SCREEN ═══════════════════ -->
+  <!-- ═════════ STATS ═════════ -->
   <div id="s-stats" class="screen">
-    <div class="stats-header">
-      <button class="btn-back" onclick="goTo('s-home')">← Home</button>
-      <span class="screen-title">STATS</span>
-    </div>
+    <div class="game-hdr"><span class="screen-title">📊 STATS</span></div>
     <div class="stats-grid" id="stats-grid"></div>
-    <div class="divider"></div>
-    <div class="drop-rates">
-      <h3>Drop Rates</h3>
-      <div id="drop-rate-rows"></div>
-    </div>
-    <div class="ad-timer-table">
+    <div class="panel"><h3>🎲 Casino Stats</h3><div class="stats-grid" id="game-stats-grid" style="max-width:none"></div></div>
+    <div class="ad-slot"></div>
+    <div class="panel"><h3>Drop Rates</h3><div id="drop-rate-rows"></div></div>
+    <div class="panel">
       <h3>⚡ Ad Duration by Rarity</h3>
-      <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">
-        Pull rarer items → shorter ads for life!
-      </div>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">Pull rarer items → shorter ads for life!</div>
       <div id="adt-rows"></div>
     </div>
   </div>
 
-</div><!-- #app -->
+  <!-- BOTTOM NAV -->
+  <nav id="nav">
+    <button class="tab active" data-tab="s-home" onclick="goTo('s-home')"><span class="ti">🏠</span>Home</button>
+    <button class="tab" data-tab="s-open" onclick="goTo('s-open')"><span class="ti">📦</span>Cases</button>
+    <button class="tab" data-tab="s-games" onclick="goTo('s-games')"><span class="ti">🎲</span>Games</button>
+    <button class="tab" data-tab="s-inv" onclick="goTo('s-inv')"><span class="ti">🎒</span>Inv</button>
+    <button class="tab" data-tab="s-stats" onclick="goTo('s-stats')"><span class="ti">📊</span>Stats</button>
+  </nav>
+</div>
+
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════
-   ░░░░░░░░░  AD NETWORK CONFIGURATION — JAVASCRIPT  ░░░░░░░░░░░░░░
-   ═══════════════════════════════════════════════════════════════════
-   After pasting your ad script in the <head>, edit the values below:
-   ─────────────────────────────────────────────────────────────────── */
+   CONFIG
+   ═══════════════════════════════════════════════════════════════════ */
 const CONFIG = {
-  AD_NETWORK_CONFIGURED : false,       // ← set true after adding your script
-  AD_PROVIDER           : 'demo',      // 'adsense' | 'adsterra' | 'demo'
-  ADSENSE_CLIENT        : 'ca-pub-XXXXXXXXXXXXXXXXXX',
-  ADSENSE_SLOT          : 'XXXXXXXXXX',
+  AD_NETWORK_CONFIGURED : true,
+  AD_PROVIDER           : 'adsense',
+  ADSENSE_CLIENT        : 'ca-pub-4658804751628379',
+  ADSENSE_SLOT          : '',      // optional: display ad-unit slot ID (AdSense → Ads → By ad unit)
 
-  /* ── RARITY-SCALED AD TIMER ──────────────────────────────────────
-     The rarest item in your inventory determines how long you watch ads.
-     Pull epic items → only 15 seconds. Pull ultra-rare → only 5 seconds!
-     ─────────────────────────────────────────────────────────────── */
-  AD_DURATION: {
-    none      : 30,   // No items yet       → 30s  ⬛
-    common    : 30,   // Common in inv      → 30s  🔘
-    uncommon  : 25,   // Uncommon in inv    → 25s  🔵
-    rare      : 20,   // Rare in inv        → 20s  🟣
-    epic      : 15,   // Epic in inv        → 15s  🩷
-    legendary : 10,   // Legendary in inv   → 10s  🔴
-    ultra     :  5,   // Ultra Rare in inv  →  5s ⭐ (max perk!)
-  },
+  /* Rarity-scaled ad timer — rarest item in inventory sets the ad length */
+  AD_DURATION: { none:30, common:30, uncommon:25, rare:20, epic:15, legendary:10, ultra:5 },
 
-  KEYS_PER_AD        : 1,
-  CASE_COST          : 1,
-  DAILY_BONUS_KEYS   : 2,
-  STREAK_BONUS_MAX   : 5,   // max extra keys from streak
-  COMMONS_FOR_KEY    : 5,   // how many commons scrap into 1 key
+  KEYS_PER_AD       : 1,
+  COINS_PER_AD      : 100,
+  CASE_COST         : 1,
+  DAILY_BONUS_KEYS  : 2,
+  DAILY_BONUS_COINS : 200,
+  STREAK_BONUS_MAX  : 5,
+  COMMONS_FOR_KEY   : 5,
+  START_KEYS        : 3,
+  START_COINS       : 500,
+  MIN_BET           : 10,
+  MINE_WIN          : 300,
+  MINE_LOSS         : 50,
 };
-/* ═══════════════════════════════════════════════════════════════════ */
 
-/* ─────────────────────────────────────────────────────────────────
-   ITEMS DATABASE
-   ───────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   ITEMS
+   ═══════════════════════════════════════════════════════════════════ */
 const RARITY = {
   common    : { label:'Common',    color:'#9ea3ac', weight:40, scrap:0  },
   uncommon  : { label:'Uncommon',  color:'#5e98d9', weight:30, scrap:1  },
@@ -676,781 +628,900 @@ const RARITY = {
   ultra     : { label:'Ultra Rare',color:'#ffd700', weight:1,  scrap:50 },
 };
 const RARITY_ORDER = ['common','uncommon','rare','epic','legendary','ultra'];
-
 const ITEMS = [
-  // ── Common (grey)  40% ──────────────────────────────────────────
-  {id:'c1',name:'Field Knife',       emoji:'🗡️',  rarity:'common'},
-  {id:'c2',name:'Rusty Pistol',      emoji:'🔫',  rarity:'common'},
-  {id:'c3',name:'Iron Shield',       emoji:'🛡️',  rarity:'common'},
-  {id:'c4',name:'Dog Tags',          emoji:'🎖️',  rarity:'common'},
-  {id:'c5',name:'Worn Boots',        emoji:'🥾',  rarity:'common'},
-  // ── Uncommon (blue) 30% ─────────────────────────────────────────
-  {id:'u1',name:'Combat Knife',      emoji:'⚔️',  rarity:'uncommon'},
-  {id:'u2',name:'Service Pistol',    emoji:'🔫',  rarity:'uncommon'},
-  {id:'u3',name:'Tac Shield',        emoji:'🛡️',  rarity:'uncommon'},
-  {id:'u4',name:'Field Radio',       emoji:'📡',  rarity:'uncommon'},
-  // ── Rare (purple)  15% ──────────────────────────────────────────
-  {id:'r1',name:'Karambit | Forest', emoji:'🔪',  rarity:'rare'},
-  {id:'r2',name:'Deagle | Oxide',    emoji:'🔫',  rarity:'rare'},
-  {id:'r3',name:'Shadow Daggers',    emoji:'🗡️',  rarity:'rare'},
-  {id:'r4',name:'Operator Gloves',   emoji:'🧤',  rarity:'rare'},
-  // ── Epic (pink)    10% ──────────────────────────────────────────
-  {id:'e1',name:'Butterfly | Fade',  emoji:'🦋',  rarity:'epic'},
-  {id:'e2',name:'Deagle | Blaze',    emoji:'🔥',  rarity:'epic'},
-  {id:'e3',name:'Specialist Gloves', emoji:'🧤',  rarity:'epic'},
-  // ── Legendary (red) 4% ──────────────────────────────────────────
-  {id:'l1',name:'AK-47 | Redline',   emoji:'💥',  rarity:'legendary'},
-  {id:'l2',name:'M4A4 | Howl',       emoji:'🐺',  rarity:'legendary'},
-  {id:'l3',name:'King Snake Gloves', emoji:'🐍',  rarity:'legendary'},
-  // ── Ultra Rare (gold) 1% ────────────────────────────────────────
-  {id:'ur1',name:'★ Karambit | Crimson Web',emoji:'⭐',rarity:'ultra'},
-  {id:'ur2',name:'★ Bayonet | Sapphire',    emoji:'💎',rarity:'ultra'},
-  {id:'ur3',name:'★ M9 | Emerald',          emoji:'💚',rarity:'ultra'},
+  {id:'c1',name:'Field Knife',emoji:'🗡️',rarity:'common'},{id:'c2',name:'Rusty Pistol',emoji:'🔫',rarity:'common'},
+  {id:'c3',name:'Iron Shield',emoji:'🛡️',rarity:'common'},{id:'c4',name:'Dog Tags',emoji:'🎖️',rarity:'common'},
+  {id:'c5',name:'Worn Boots',emoji:'🥾',rarity:'common'},
+  {id:'u1',name:'Combat Knife',emoji:'⚔️',rarity:'uncommon'},{id:'u2',name:'Service Pistol',emoji:'🔫',rarity:'uncommon'},
+  {id:'u3',name:'Tac Shield',emoji:'🛡️',rarity:'uncommon'},{id:'u4',name:'Field Radio',emoji:'📡',rarity:'uncommon'},
+  {id:'r1',name:'Karambit | Forest',emoji:'🔪',rarity:'rare'},{id:'r2',name:'Deagle | Oxide',emoji:'🔫',rarity:'rare'},
+  {id:'r3',name:'Shadow Daggers',emoji:'🗡️',rarity:'rare'},{id:'r4',name:'Operator Gloves',emoji:'🧤',rarity:'rare'},
+  {id:'e1',name:'Butterfly | Fade',emoji:'🦋',rarity:'epic'},{id:'e2',name:'Deagle | Blaze',emoji:'🔥',rarity:'epic'},
+  {id:'e3',name:'Specialist Gloves',emoji:'🧤',rarity:'epic'},
+  {id:'l1',name:'AK-47 | Redline',emoji:'💥',rarity:'legendary'},{id:'l2',name:'M4A4 | Howl',emoji:'🐺',rarity:'legendary'},
+  {id:'l3',name:'King Snake Gloves',emoji:'🐍',rarity:'legendary'},
+  {id:'ur1',name:'★ Karambit | Crimson Web',emoji:'⭐',rarity:'ultra'},{id:'ur2',name:'★ Bayonet | Sapphire',emoji:'💎',rarity:'ultra'},
+  {id:'ur3',name:'★ M9 | Emerald',emoji:'💚',rarity:'ultra'},
 ];
-
 const DEMO_BRANDS = ['ExampleCo™','TechNova','ShopZone','ClickHere Inc.','GameFuel','PixelPulse'];
 
-/* ─────────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════
    STATE & PERSISTENCE
-   ───────────────────────────────────────────────────────────────── */
+   ═══════════════════════════════════════════════════════════════════ */
 const SAVE_KEY = 'addrop_v1';
 let state;
-
 function defaultState() {
   return {
-    keys      : 3,   // start with 3 keys so new player can try immediately
-    inventory : [],
-    nextUid   : 1,
-    stats     : { casesOpened:0, adsWatched:0, bestRarity:null, itemsScrapped:0 },
-    daily     : { lastLogin:null, streak:0 },
+    keys: CONFIG.START_KEYS, coins: CONFIG.START_COINS, inventory: [], nextUid: 1,
+    stats: { casesOpened:0, adsWatched:0, bestRarity:null, itemsScrapped:0,
+             rouletteSpins:0, rouletteWins:0, bjHands:0, bjWins:0, races:0, raceWins:0,
+             hiloRounds:0, hiloBestStreak:0, mineGames:0, mineWins:0,
+             coinsWon:0, coinsLost:0, biggestWin:0 },
+    daily: { lastLogin:null, streak:0 },
   };
 }
-
-function saveState() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){}
-}
-
+function saveState() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){} }
 function loadState() {
+  const d = defaultState();
   try {
     const raw = localStorage.getItem(SAVE_KEY);
-    if (raw) { state = { ...defaultState(), ...JSON.parse(raw) }; return; }
+    if (raw) {
+      const s = JSON.parse(raw);
+      state = { ...d, ...s, stats:{ ...d.stats, ...(s.stats||{}) }, daily:{ ...d.daily, ...(s.daily||{}) } };
+      if (typeof state.coins !== 'number' || isNaN(state.coins)) state.coins = CONFIG.START_COINS;
+      return;
+    }
   } catch(e){}
-  state = defaultState();
+  state = d;
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   RARITY HELPERS
-   ───────────────────────────────────────────────────────────────── */
-function rarityColor(r){ return RARITY[r]?.color || '#fff'; }
-function rarityLabel(r){ return RARITY[r]?.label || r; }
+/* ═══════════════════════════════════════════════════════════════════
+   COINS
+   ═══════════════════════════════════════════════════════════════════ */
+function bumpEl(id){ const el=document.getElementById(id); if(!el) return; el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+function spendCoins(n){ state.coins = Math.max(0, state.coins - n); saveState(); refreshUI(); }
+function addCoins(n){ state.coins += n; saveState(); refreshUI(); bumpEl('coins-badge'); }
+/* record a finished round: net = coins returned − stake */
+function recordRound(net){
+  if (net > 0) { state.stats.coinsWon += net; state.stats.biggestWin = Math.max(state.stats.biggestWin, net); }
+  else if (net < 0) state.stats.coinsLost += -net;
+  saveState();
+}
+function getBet(id){
+  const el = document.getElementById(id);
+  const v = Math.floor(Number(el.value));
+  if (!v || v < CONFIG.MIN_BET) { showToast(`Minimum bet is ${CONFIG.MIN_BET} 💰`); Audio.lose(); return 0; }
+  if (v > state.coins) { showToast('❌ Not enough coins — watch an ad for +100 💰'); Audio.lose(); return 0; }
+  return v;
+}
+function adjBet(id, op){
+  const el = document.getElementById(id); let v = Math.floor(Number(el.value)) || CONFIG.MIN_BET;
+  if (op==='half') v = Math.floor(v/2); else if (op==='dbl') v *= 2; else if (op==='max') v = state.coins; else v += op;
+  el.value = Math.max(CONFIG.MIN_BET, Math.min(v, Math.max(CONFIG.MIN_BET, state.coins)));
+  Audio.button();
+}
+function mountBetControls(){
+  document.querySelectorAll('.bet-ctl').forEach(el => {
+    const id = el.dataset.id;
+    el.innerHTML = `<div class="bet-row"><label>Bet 💰</label>
+      <input class="bet-input" id="${id}" type="number" min="${CONFIG.MIN_BET}" step="10" value="50" inputmode="numeric">
+      <button class="chip" onclick="adjBet('${id}','half')">½</button><button class="chip" onclick="adjBet('${id}','dbl')">2×</button>
+      <button class="chip" onclick="adjBet('${id}',10)">+10</button><button class="chip" onclick="adjBet('${id}',100)">+100</button>
+      <button class="chip" onclick="adjBet('${id}','max')">MAX</button></div>`;
+  });
+}
+function setMsg(id, text, cls=''){ const el=document.getElementById(id); el.innerHTML=text; el.className='result-msg '+cls; }
+function showGameAd(game){ const el=document.getElementById('gad-'+game); if(el){ el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); } }
+function hideGameAd(game){ const el=document.getElementById('gad-'+game); if(el) el.classList.remove('show'); }
 
+/* ═══════════════════════════════════════════════════════════════════
+   RARITY HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+const rarityColor = r => RARITY[r]?.color || '#fff';
+const rarityLabel = r => RARITY[r]?.label || r;
 function getBestRarity() {
   let best = -1;
-  for (const item of state.inventory) {
-    const idx = RARITY_ORDER.indexOf(item.rarity);
-    if (idx > best) best = idx;
-  }
+  for (const it of state.inventory) best = Math.max(best, RARITY_ORDER.indexOf(it.rarity));
   return best >= 0 ? RARITY_ORDER[best] : 'none';
 }
-
-function getAdDuration() {
-  return CONFIG.AD_DURATION[getBestRarity()] ?? 30;
-}
-
+const getAdDuration = () => CONFIG.AD_DURATION[getBestRarity()] ?? 30;
 function weightedRandom() {
   const total = Object.values(RARITY).reduce((s,r) => s + r.weight, 0);
   let r = Math.random() * total;
-  for (const [key, val] of Object.entries(RARITY)) {
-    r -= val.weight;
-    if (r <= 0) return key;
-  }
+  for (const [k,v] of Object.entries(RARITY)) { r -= v.weight; if (r <= 0) return k; }
   return 'common';
 }
-
-function pickItem(rarity) {
-  const pool = ITEMS.filter(i => i.rarity === rarity);
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function rollWinner() {
-  return pickItem(weightedRandom());
-}
-
+function pickItem(rarity){ const pool = ITEMS.filter(i => i.rarity === rarity); return pool[Math.floor(Math.random()*pool.length)]; }
+const rollWinner = () => pickItem(weightedRandom());
 function reelItem() {
-  // Weighted for reel visuals — slightly more colorful than real odds
   const r = Math.random();
-  if (r < 0.35) return pickItem('common');
-  if (r < 0.62) return pickItem('uncommon');
-  if (r < 0.82) return pickItem('rare');
-  if (r < 0.95) return pickItem('epic');
-  if (r < 0.995) return pickItem('legendary');
-  return pickItem('ultra');
+  if (r < .35) return pickItem('common'); if (r < .62) return pickItem('uncommon');
+  if (r < .82) return pickItem('rare');   if (r < .95) return pickItem('epic');
+  if (r < .995) return pickItem('legendary'); return pickItem('ultra');
 }
 
-/* ─────────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════
    WEB AUDIO ENGINE
-   ───────────────────────────────────────────────────────────────── */
+   ═══════════════════════════════════════════════════════════════════ */
 const Audio = (() => {
   let ctx = null;
   function ac() {
-    if (!ctx) {
-      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
-    }
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){} }
     if (ctx && ctx.state === 'suspended') ctx.resume();
     return ctx;
   }
-  function tone({ freq=440, dur=0.06, vol=0.35, type='sine', ramp=true, delay=0 }) {
+  function tone({ freq=440, dur=.06, vol=.35, type='sine', delay=0, to=null }) {
     const c = ac(); if (!c) return;
-    const osc = c.createOscillator();
-    const g   = c.createGain();
-    osc.type = type;
-    osc.frequency.value = freq;
-    const t0 = c.currentTime + delay;
-    g.gain.setValueAtTime(0.001, t0);
-    g.gain.linearRampToValueAtTime(vol, t0 + 0.005);
-    if (ramp) g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
-    osc.connect(g); g.connect(c.destination);
-    osc.start(t0); osc.stop(t0 + dur + 0.01);
+    const o = c.createOscillator(), g = c.createGain(), t0 = c.currentTime + delay;
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t0 + dur);
+    g.gain.setValueAtTime(.001, t0); g.gain.linearRampToValueAtTime(vol, t0 + .005);
+    g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+    o.connect(g); g.connect(c.destination); o.start(t0); o.stop(t0 + dur + .02);
   }
-
-  const RARITY_FREQ = { common:580, uncommon:680, rare:820, epic:960, legendary:1100, ultra:1400 };
-
+  function noise({ dur=.3, vol=.3, delay=0, filter='lowpass', f=1200, q=1, fadeIn=.005 }) {
+    const c = ac(); if (!c) return;
+    const len = Math.max(1, Math.floor(c.sampleRate * dur));
+    const buf = c.createBuffer(1, len, c.sampleRate), data = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) data[i] = Math.random()*2 - 1;
+    const src = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(), t0 = c.currentTime + delay;
+    src.buffer = buf; fl.type = filter; fl.frequency.value = f; fl.Q.value = q;
+    g.gain.setValueAtTime(.001, t0); g.gain.linearRampToValueAtTime(vol, t0 + fadeIn);
+    g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+    src.connect(fl); fl.connect(g); g.connect(c.destination); src.start(t0); src.stop(t0 + dur + .02);
+  }
+  const RF = { common:580, uncommon:680, rare:820, epic:960, legendary:1100, ultra:1400 };
   return {
-    tick(rarity='common', speed=1) {
-      const base = RARITY_FREQ[rarity] || 580;
-      const jitter = 0.85 + Math.random() * 0.3;
-      tone({ freq: base * jitter, dur: 0.04, vol: Math.min(0.5, 0.18 + speed * 0.08), type:'square' });
+    tick(r='common', speed=1){ tone({ freq:(RF[r]||580)*(.85+Math.random()*.3), dur:.04, vol:Math.min(.5,.18+speed*.08), type:'square' }); },
+    caseClick(){ tone({freq:220,dur:.09,vol:.5,type:'sawtooth'}); tone({freq:340,dur:.07,vol:.4,type:'sawtooth',delay:.06}); },
+    reveal(r){
+      const p = { common:1, uncommon:1.2, rare:1.6, epic:2, legendary:2.6, ultra:3.4 }[r] || 1;
+      tone({ freq:260*p, to:880*p, dur:.9, vol:.5 });
     },
-    caseClick() {
-      tone({ freq:220, dur:0.09, vol:0.5, type:'sawtooth' });
-      tone({ freq:340, dur:0.07, vol:0.4, type:'sawtooth', delay:0.06 });
+    ding(n=1){ [392,494,587].slice(0,Math.min(n,3)).forEach((f,i)=>tone({freq:f,dur:.18,vol:.4,delay:i*.12})); },
+    button(){ tone({ freq:440, dur:.04, vol:.15, type:'square' }); },
+    scrap(){ tone({freq:700,dur:.04,vol:.3,type:'sawtooth'}); tone({freq:500,dur:.06,vol:.2,delay:.05}); },
+    daily(){ [262,330,392,523].forEach((f,i)=>tone({freq:f,dur:.14,vol:.38,delay:i*.11})); },
+    /* roulette: whooshing white noise + decelerating ball ticks */
+    rouletteSpin(sec=4.5){
+      noise({ dur:sec, vol:.18, filter:'bandpass', f:900, q:.7, fadeIn:.3 });
+      let t = 0, gap = .05;
+      while (t < sec - .2) { tone({ freq:1800+Math.random()*600, dur:.02, vol:.22, type:'square', delay:t }); t += gap; gap *= 1.085; }
+      tone({ freq:900, dur:.08, vol:.35, type:'triangle', delay:sec - .1 });
     },
-    reveal(rarity) {
-      const p = { common:1, uncommon:1.2, rare:1.6, epic:2.0, legendary:2.6, ultra:3.4 }[rarity] || 1;
-      const c = ac(); if (!c) return;
-      const osc = c.createOscillator(); const g = c.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(260*p, c.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(880*p, c.currentTime + 0.55);
-      g.gain.setValueAtTime(0.001, c.currentTime);
-      g.gain.linearRampToValueAtTime(0.55, c.currentTime + 0.05);
-      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.9);
-      osc.connect(g); g.connect(c.destination);
-      osc.start(); osc.stop(c.currentTime + 0.95);
-    },
-    ding(keys=1) {
-      const notes=[392,494,587];
-      notes.slice(0, Math.min(keys,3)).forEach((f,i)=>{
-        tone({ freq:f, dur:0.18, vol:0.4, delay:i*0.12 });
-      });
-    },
-    button() { tone({ freq:440, dur:0.04, vol:0.18, type:'square' }); },
-    scrap()  {
-      tone({ freq:700, dur:0.04, vol:0.3, type:'sawtooth' });
-      tone({ freq:500, dur:0.06, vol:0.2, delay:0.05 });
-    },
-    daily()  {
-      [262,330,392,523].forEach((f,i) => tone({ freq:f, dur:0.14, vol:0.38, delay:i*0.11 }));
-    },
+    swish(delay=0){ noise({ dur:.12, vol:.25, filter:'highpass', f:2500, delay }); tone({freq:900,to:300,dur:.1,vol:.08,delay}); },
+    buzz(){ tone({freq:160,dur:.35,vol:.3,type:'sawtooth'}); tone({freq:110,dur:.4,vol:.25,type:'sawtooth',delay:.12}); },
+    fanfare(){ [523,659,784,1047].forEach((f,i)=>tone({freq:f,dur:i===3?.4:.13,vol:.33,type:'triangle',delay:i*.12})); },
+    cheer(){ noise({ dur:1.4, vol:.22, filter:'bandpass', f:1500, q:.5, fadeIn:.15 }); [784,988,1175,1568].forEach((f,i)=>tone({freq:f,dur:.2,vol:.3,delay:.1+i*.1})); },
+    click(){ tone({ freq:1200, dur:.03, vol:.15, type:'triangle' }); },
+    flag(){ tone({ freq:700, to:1000, dur:.08, vol:.2, type:'triangle' }); },
+    thud(){ tone({freq:120,to:30,dur:.7,vol:.8,type:'sine'}); noise({dur:.8,vol:.6,filter:'lowpass',f:500}); },
+    win(){ [523,659,784,1047,1319].forEach((f,i)=>tone({freq:f,dur:.16,vol:.32,delay:i*.08})); },
+    lose(){ [392,330,262,196].forEach((f,i)=>tone({freq:f,dur:.18,vol:.26,type:'sawtooth',delay:i*.1})); },
+    coin(){ tone({freq:1319,dur:.08,vol:.25}); tone({freq:1760,dur:.14,vol:.25,delay:.07}); },
   };
 })();
 
-/* ─────────────────────────────────────────────────────────────────
-   PARTICLE SYSTEM
-   ───────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   PARTICLES / FLASH / SHAKE / TOAST
+   ═══════════════════════════════════════════════════════════════════ */
 const Particles = (() => {
-  const canvas = document.getElementById('ptcl');
-  const ctx2   = canvas.getContext('2d');
-  let pts = [], rafId = null;
-
-  function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
-  window.addEventListener('resize', resize); resize();
-
+  const cv = document.getElementById('ptcl'), g = cv.getContext('2d');
+  let pts = [], raf = null;
+  const resize = () => { cv.width = innerWidth; cv.height = innerHeight; };
+  addEventListener('resize', resize); resize();
   function burst(x, y, color, n=60) {
-    for (let i=0; i<n; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 4 + Math.random() * 12;
-      pts.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 4,
-        color: i % 3 === 0 ? '#fff' : color,
-        s: 3 + Math.random() * 7,
-        life: 1,
-        decay: 0.013 + Math.random() * 0.018,
-        rot: Math.random() * 6.28,
-        rspd: (Math.random() - 0.5) * 0.25,
-      });
+    for (let i = 0; i < n; i++) {
+      const a = Math.random()*Math.PI*2, s = 4 + Math.random()*12;
+      pts.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s-4, color:i%3===0?'#fff':color, s:3+Math.random()*7,
+                 life:1, decay:.013+Math.random()*.018, rot:Math.random()*6.28, rs:(Math.random()-.5)*.25 });
     }
-    if (!rafId) loop();
+    if (!raf) loop();
   }
-
   function loop() {
-    ctx2.clearRect(0, 0, canvas.width, canvas.height);
-    pts = pts.filter(p => p.life > 0.01);
+    g.clearRect(0, 0, cv.width, cv.height);
+    pts = pts.filter(p => p.life > .01);
     for (const p of pts) {
-      p.x  += p.vx; p.y += p.vy;
-      p.vy += 0.45; p.vx *= 0.97;
-      p.life -= p.decay; p.rot += p.rspd;
-      ctx2.save();
-      ctx2.translate(p.x, p.y); ctx2.rotate(p.rot);
-      ctx2.globalAlpha = p.life;
-      ctx2.fillStyle = p.color;
-      ctx2.fillRect(-p.s/2, -p.s/2, p.s, p.s);
-      ctx2.restore();
+      p.x += p.vx; p.y += p.vy; p.vy += .45; p.vx *= .97; p.life -= p.decay; p.rot += p.rs;
+      g.save(); g.translate(p.x, p.y); g.rotate(p.rot); g.globalAlpha = p.life; g.fillStyle = p.color;
+      g.fillRect(-p.s/2, -p.s/2, p.s, p.s); g.restore();
     }
-    rafId = pts.length > 0 ? requestAnimationFrame(loop) : null;
+    raf = pts.length ? requestAnimationFrame(loop) : null;
   }
-
   return { burst };
 })();
-
-/* ─────────────────────────────────────────────────────────────────
-   SCREEN FLASH & SHAKE
-   ───────────────────────────────────────────────────────────────── */
 function flashScreen(color='#ffd700') {
   const el = document.createElement('div');
-  el.style.cssText = `position:fixed;inset:0;background:${color};opacity:.8;
-    z-index:950;pointer-events:none;animation:flash-out .55s ease forwards`;
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 600);
+  el.style.cssText = `position:fixed;inset:0;background:${color};opacity:.8;z-index:950;pointer-events:none;animation:flash-out .55s ease forwards`;
+  document.body.appendChild(el); setTimeout(() => el.remove(), 600);
 }
-
-function shakeApp() {
-  const app = document.getElementById('app');
-  app.classList.add('shake');
-  setTimeout(() => app.classList.remove('shake'), 650);
-}
-
-/* ─────────────────────────────────────────────────────────────────
-   TOAST
-   ───────────────────────────────────────────────────────────────── */
+function shakeApp(){ const a=document.getElementById('app'); a.classList.add('shake'); setTimeout(()=>a.classList.remove('shake'),650); }
+function bigWin(color='#2ecc71', n=90){ Particles.burst(innerWidth/2, innerHeight/2, color, n); }
 let toastTimer;
-function showToast(msg, duration=2200) {
+function showToast(msg, dur=2200) {
   clearTimeout(toastTimer);
   let t = document.querySelector('.toast');
-  if (!t) { t = document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
-  t.innerHTML = msg; t.style.opacity='1';
-  toastTimer = setTimeout(() => { if(t) t.style.opacity='0'; }, duration);
+  if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  t.innerHTML = msg; t.style.opacity = '1';
+  toastTimer = setTimeout(() => { t.style.opacity = '0'; }, dur);
 }
 
-/* ─────────────────────────────────────────────────────────────────
+/* ═══════════════════════════════════════════════════════════════════
    DAILY BONUS
-   ───────────────────────────────────────────────────────────────── */
+   ═══════════════════════════════════════════════════════════════════ */
 function checkDailyBonus() {
-  const today = new Date().toDateString();
-  const last  = state.daily.lastLogin;
-  if (last === today) return; // already claimed
-
+  const today = new Date().toDateString(), last = state.daily.lastLogin;
+  if (last === today) return;
   const yesterday = new Date(Date.now() - 86400000).toDateString();
-  if (last === yesterday) {
-    state.daily.streak = Math.min((state.daily.streak || 0) + 1, 30);
-  } else {
-    state.daily.streak = 1;
-  }
+  state.daily.streak = last === yesterday ? Math.min((state.daily.streak||0) + 1, 30) : 1;
   state.daily.lastLogin = today;
-
-  const streakBonus = Math.min(state.daily.streak - 1, CONFIG.STREAK_BONUS_MAX);
-  const keys = CONFIG.DAILY_BONUS_KEYS + streakBonus;
-  state.keys += keys;
-  saveState();
-
-  const streakEl  = document.getElementById('daily-streak');
-  const rewardEl  = document.getElementById('daily-reward');
-  streakEl.textContent = state.daily.streak > 1
-    ? `🔥 Day ${state.daily.streak} Streak! +${streakBonus} bonus key${streakBonus!==1?'s':''}`
-    : 'Day 1 — Welcome back!';
-  rewardEl.innerHTML = `+${keys} <span>🗝️</span>`;
-
+  const sb = Math.min(state.daily.streak - 1, CONFIG.STREAK_BONUS_MAX);
+  const keys = CONFIG.DAILY_BONUS_KEYS + sb, coins = CONFIG.DAILY_BONUS_COINS + sb * 50;
+  state.keys += keys; state.coins += coins; saveState();
+  document.getElementById('daily-streak').textContent = state.daily.streak > 1
+    ? `🔥 Day ${state.daily.streak} Streak! +${sb} bonus key${sb!==1?'s':''} & +${sb*50} 💰` : 'Day 1 — Welcome!';
+  document.getElementById('daily-reward').innerHTML = `<span>+${keys} 🗝️</span><span style="color:#7dffb0">+${coins} 💰</span>`;
   Audio.daily();
   document.getElementById('daily-modal').classList.add('open');
 }
+function closeDailyModal(){ document.getElementById('daily-modal').classList.remove('open'); refreshUI(); }
 
-function closeDailyModal() {
-  document.getElementById('daily-modal').classList.remove('open');
-  refreshUI();
+/* ═══════════════════════════════════════════════════════════════════
+   GOOGLE ADSENSE
+   ═══════════════════════════════════════════════════════════════════ */
+function adInsHTML() {
+  const slot = CONFIG.ADSENSE_SLOT ? ` data-ad-slot="${CONFIG.ADSENSE_SLOT}"` : '';
+  return `<ins class="adsbygoogle" style="display:block;width:100%;min-height:60px" data-ad-client="${CONFIG.ADSENSE_CLIENT}"${slot}
+    data-ad-format="auto" data-full-width-responsive="true"></ins>`;
+}
+function pushAd(){ try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e){ console.warn('AdSense push:', e.message); } }
+/* Fill every blank .ad-slot with a responsive AdSense banner (once each) */
+function mountBannerAds() {
+  document.querySelectorAll('.ad-slot').forEach(el => {
+    if (el.dataset.mounted) return;
+    el.dataset.mounted = '1';
+    el.innerHTML = '<span class="ad-lbl">Advertisement</span>' + adInsHTML();
+    pushAd();
+  });
+}
+/* AdSense unit inside the watch-ad countdown box */
+function mountWatchAd() {
+  const slot = document.getElementById('ad-unit-slot');
+  if (!slot.dataset.mounted) { slot.dataset.mounted = '1'; slot.innerHTML = adInsHTML(); pushAd(); }
+  const fb = document.getElementById('ad-fallback');
+  fb.classList.remove('show');
+  // If AdSense didn't fill (blocked / unapproved domain), show a sponsor card so the box isn't blank
+  setTimeout(() => {
+    const ins = slot.querySelector('ins');
+    const filled = ins && ins.getAttribute('data-ad-status') === 'filled';
+    if (!filled) {
+      document.getElementById('ad-brand-name').textContent = currentAdBrand.toUpperCase().replace(/[™®]/g,'');
+      fb.classList.add('show');
+    }
+  }, 2500);
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   AD / KEY SYSTEM
-   ───────────────────────────────────────────────────────────────── */
-let adTimer = null;
-let adSecsLeft = 30;
-let currentAdBrand = '';
-
+/* ═══════════════════════════════════════════════════════════════════
+   WATCH-AD / REWARDS
+   ═══════════════════════════════════════════════════════════════════ */
+let adTimer = null, adSecsLeft = 30, currentAdBrand = '', adReturn = 's-home';
+function startAdFrom(screen){ adReturn = screen || 's-home'; goTo('s-ad'); }
 function watchAd() {
   const dur = getAdDuration();
   adSecsLeft = dur;
-  currentAdBrand = DEMO_BRANDS[Math.floor(Math.random() * DEMO_BRANDS.length)];
+  currentAdBrand = DEMO_BRANDS[Math.floor(Math.random()*DEMO_BRANDS.length)];
+  document.getElementById('ad-network-tag').textContent = CONFIG.AD_NETWORK_CONFIGURED ? `[${CONFIG.AD_PROVIDER.toUpperCase()}]` : '[DEMO AD]';
+  mountWatchAd();
 
-  // Update ad box visuals
-  document.getElementById('ad-brand-name').textContent = currentAdBrand.toUpperCase().replace(/[™®]/g,'');
-  document.getElementById('ad-tagline').textContent    = 'Advertisement — watch to earn a key';
-  document.getElementById('ad-network-tag').textContent = CONFIG.AD_NETWORK_CONFIGURED
-    ? `[${CONFIG.AD_PROVIDER.toUpperCase()}]` : '[DEMO AD]';
-
-  // Rarity tip
-  const best = getBestRarity();
-  const tipEl = document.getElementById('ad-rarity-tip');
-  if (best === 'none' || best === 'common') {
-    tipEl.innerHTML = '🔥 Pull rarer items to shorten future ads — down to <b>5s</b>!';
-  } else if (best === 'ultra') {
-    tipEl.innerHTML = '⭐ Ultra Rare detected! Ad reduced to just <b>5s</b>!';
-  } else {
+  const best = getBestRarity(), tip = document.getElementById('ad-rarity-tip');
+  if (best === 'none' || best === 'common') tip.innerHTML = '🔥 Pull rarer items to shorten future ads — down to <b>5s</b>!';
+  else if (best === 'ultra') tip.innerHTML = '⭐ Ultra Rare detected! Ad reduced to just <b>5s</b>!';
+  else {
     const next = RARITY_ORDER[RARITY_ORDER.indexOf(best) + 1];
-    const nextTime = CONFIG.AD_DURATION[next];
-    tipEl.innerHTML = `⚡ <b>${rarityLabel(best)}</b> perk active! Pull <b>${rarityLabel(next)}</b> to cut ads to ${nextTime}s!`;
+    tip.innerHTML = `⚡ <b>${rarityLabel(best)}</b> perk active! Pull <b>${rarityLabel(next)}</b> to cut ads to ${CONFIG.AD_DURATION[next]}s!`;
   }
-
-  // Ring setup
-  const ring = document.getElementById('ring-fg');
-  const circumference = 283; // 2π × 45
-  ring.style.strokeDasharray  = circumference;
-  ring.style.strokeDashoffset = 0;
-  ring.style.transition = 'none';
+  const ring = document.getElementById('ring-fg'), C = 283;
+  ring.style.transition = 'none'; ring.style.strokeDashoffset = 0;
   document.getElementById('ad-secs').textContent = adSecsLeft;
-
-  // Start countdown
   clearInterval(adTimer);
   adTimer = setInterval(() => {
     adSecsLeft--;
     document.getElementById('ad-secs').textContent = adSecsLeft;
-    const progress = (dur - adSecsLeft) / dur;
-    ring.style.transition = 'stroke-dashoffset 0.9s linear';
-    ring.style.strokeDashoffset = circumference * progress;
-
-    if (adSecsLeft <= 0) {
-      clearInterval(adTimer);
-      onAdComplete();
-    }
+    ring.style.transition = 'stroke-dashoffset .9s linear';
+    ring.style.strokeDashoffset = C * (dur - adSecsLeft) / dur;
+    if (adSecsLeft <= 0) { clearInterval(adTimer); onAdComplete(); }
   }, 1000);
-
-  /* ── REAL AD INTEGRATION HOOK ──────────────────────────────────
-     If AD_NETWORK_CONFIGURED is true, call your ad SDK here.
-     The SDK's reward callback should call onAdComplete().
-     Example (AdSense rewarded):
-       window.adsbygoogle = window.adsbygoogle || [];
-       adsbygoogle.push({ googletag.pubads().addEventListener('rewardedSlotGranted', onAdComplete) });
-     The demo countdown still runs as fallback UI.
-     ─────────────────────────────────────────────────────────────── */
 }
-
 function onAdComplete() {
-  clearInterval(adTimer);
-  const keys = CONFIG.KEYS_PER_AD;
-  state.keys += keys;
-  state.stats.adsWatched++;
-  saveState();
-  Audio.ding(keys);
-  showToast(`🗝️ +${keys} Key earned!`);
-  setTimeout(() => goTo('s-home'), 800);
-  refreshUI();
+  clearInterval(adTimer); adTimer = null;
+  state.keys += CONFIG.KEYS_PER_AD; state.coins += CONFIG.COINS_PER_AD; state.stats.adsWatched++;
+  saveState(); Audio.ding(2); Audio.coin();
+  showToast(`🎉 +${CONFIG.KEYS_PER_AD} 🗝️  +${CONFIG.COINS_PER_AD} 💰 earned!`);
+  refreshUI(); bumpEl('coins-badge'); bumpEl('keys-badge');
+  const back = adReturn; adReturn = 's-home';
+  setTimeout(() => { if (currentScreen === 's-ad') goTo(back); }, 800);
 }
+function cancelAd(){ clearInterval(adTimer); adTimer = null; const b = adReturn; adReturn = 's-home'; goTo(b); showToast('Ad skipped — no reward'); }
+</script>
 
-function skipAd() { clearInterval(adTimer); onAdComplete(); } // debug only
 
-/* ─────────────────────────────────────────────────────────────────
-   CASE OPENING
-   ───────────────────────────────────────────────────────────────── */
-const CARD_W    = 120;
-const CARD_GAP  = 10;
-const CARD_STEP = CARD_W + CARD_GAP;  // 130
-const NUM_CARDS = 62;
-const WIN_IDX   = 48;
-
-let pendingItem = null;   // item awarded but not yet collected
-
-function generateReel(winner) {
-  const cards = [];
-  for (let i = 0; i < NUM_CARDS; i++) {
-    cards.push(i === WIN_IDX ? winner : reelItem());
-  }
-  return cards;
-}
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   CASE OPENING (CS:GO reel)
+   ═══════════════════════════════════════════════════════════════════ */
+const CARD_W = 120, CARD_GAP = 10, CARD_STEP = CARD_W + CARD_GAP, NUM_CARDS = 62, WIN_IDX = 48;
+let pendingItem = null, busy = false;
 
 function buildReelDOM(cards) {
   const strip = document.getElementById('reel-strip');
-  strip.innerHTML = '';
-  strip.style.transform = '';
-  cards.forEach((item, i) => {
-    const div = document.createElement('div');
-    div.className = 'rc';
-    div.dataset.r  = item.rarity;
-    div.dataset.idx = i;
-    div.innerHTML = `
-      <span class="rc-emoji">${item.emoji}</span>
-      <span class="rc-name">${item.name}</span>
-      <div class="rc-bar"></div>`;
-    strip.appendChild(div);
-  });
+  strip.style.transition = ''; strip.style.transform = '';
+  strip.innerHTML = cards.map(it => `<div class="rc" data-r="${it.rarity}"><span class="rc-emoji">${it.emoji}</span><span class="rc-name">${it.name}</span><div class="rc-bar"></div></div>`).join('');
   return strip;
 }
-
-function goHome() {
-  clearInterval(adTimer);
-  document.getElementById('reveal-overlay').classList.remove('open');
-  document.getElementById('open-preroll').style.display  = 'flex';
-  document.getElementById('open-rolling').style.display  = 'none';
-  goTo('s-home');
-}
-
-function startOpening() {
-  if (state.keys < CONFIG.CASE_COST) {
-    document.getElementById('open-no-keys').style.display    = 'block';
-    document.getElementById('open-watch-btn').style.display  = 'block';
-    Audio.button();
-    return;
-  }
-  state.keys -= CONFIG.CASE_COST;
-  state.stats.casesOpened++;
-  saveState();
-  refreshUI();
-
-  Audio.caseClick();
-
-  const winner = rollWinner();
-  pendingItem  = winner;
-
-  // Update best stat
-  if (!state.stats.bestRarity ||
-      RARITY_ORDER.indexOf(winner.rarity) > RARITY_ORDER.indexOf(state.stats.bestRarity)) {
-    state.stats.bestRarity = winner.rarity;
-    saveState();
-  }
-
-  const cards = generateReel(winner);
-  const strip  = buildReelDOM(cards);
-
-  // Switch views
-  document.getElementById('open-preroll').style.display  = 'none';
-  document.getElementById('open-rolling').style.display  = 'flex';
-  document.getElementById('reveal-overlay').classList.remove('open');
-
-  // Start spin after brief pause
-  setTimeout(() => animateReel(strip, winner), 180);
-}
-
-function animateReel(strip, winner) {
-  const container = document.querySelector('.reel-container');
-  const cw        = container.offsetWidth;
-  const center    = cw / 2;
-
-  const START_IDX = 3;
-  const startX    = center - START_IDX * CARD_STEP - CARD_W / 2;
-  const endX      = center - WIN_IDX   * CARD_STEP - CARD_W / 2;
-
-  strip.style.transform = `translateX(${startX}px)`;
-
-  const DURATION = 7200; // ms
-  let startTime  = null;
-  let lastCard   = START_IDX;
-
-  // quintic ease-out — dramatic deceleration like CS:GO
-  const easeOut = t => 1 - Math.pow(1 - t, 5);
-
-  function frame(now) {
-    if (!startTime) startTime = now;
-    const elapsed = Math.min(now - startTime, DURATION);
-    const t       = elapsed / DURATION;
-    const eased   = easeOut(t);
-    const curX    = startX + (endX - startX) * eased;
-
-    strip.style.transform = `translateX(${curX}px)`;
-
-    // Tick when card under marker changes
-    const curCard = Math.round((center - curX - CARD_W / 2) / CARD_STEP);
-    if (curCard !== lastCard && curCard >= 0 && curCard < NUM_CARDS) {
-      const speed = Math.abs((1 - eased) * (endX - startX) / CARD_STEP / 7.2); // approx cards/s
-      const r     = strip.children[curCard]?.dataset?.r || 'common';
-      Audio.tick(r, Math.min(speed / 4, 1));
-      lastCard = curCard;
-    }
-
-    if (elapsed < DURATION) {
-      requestAnimationFrame(frame);
-    } else {
-      // Snap to exact position
-      strip.style.transform = `translateX(${endX}px)`;
-      // tiny spring bounce
-      strip.style.transition = 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1)';
-      strip.style.transform  = `translateX(${endX}px)`;
-      setTimeout(() => { strip.style.transition = ''; }, 350);
-      setTimeout(() => revealWinner(winner), 600);
-    }
-  }
-  requestAnimationFrame(frame);
-}
-
-function revealWinner(item) {
-  const col = rarityColor(item.rarity);
-
-  // Glow winner card
-  const strip = document.getElementById('reel-strip');
-  Array.from(strip.children).forEach((c, i) => {
-    c.style.opacity = (i === WIN_IDX) ? '1' : '0.2';
-  });
-
-  // Particles
-  const amounts = { common:25, uncommon:40, rare:65, epic:85, legendary:120, ultra:200 };
-  Particles.burst(innerWidth/2, innerHeight/2, col, amounts[item.rarity] || 40);
-
-  // Sound
-  Audio.reveal(item.rarity);
-
-  // Screen effects for high rarity
-  if      (item.rarity === 'ultra')     { flashScreen('#ffd70088'); shakeApp(); }
-  else if (item.rarity === 'legendary') { flashScreen('#eb4b4b55'); }
-  else if (item.rarity === 'epic')      { flashScreen('#d14eff44'); }
-
-  // Show overlay
-  setTimeout(() => {
-    const brand = currentAdBrand || DEMO_BRANDS[0];
-    const ov    = document.getElementById('reveal-overlay');
-    const rl    = document.getElementById('reveal-rays');
-    const gl    = document.getElementById('reveal-glow');
-    rl.style.setProperty('--rarity-color', col); // doesn't work directly but set style
-    rl.parentElement.style.cssText += `--rarity-color:${col}`;
-    gl.style.cssText += `--rarity-color:${col}`;
-    // set colors via CSS var on parent
-    document.querySelector('.reveal-inner').style.setProperty('--rarity-color', col);
-    ov.style.setProperty('--rarity-color', col);
-    // also set directly on elements that use it
-    rl.style.background = rl.style.background.replace('conic-gradient','x');
-    gl.style.background = `radial-gradient(circle,${col} 0%,transparent 70%)`;
-    rl.style.background = buildRaysGradient(col);
-
-    document.getElementById('rev-emoji').textContent = item.emoji;
-    document.getElementById('rev-name').textContent  = item.name;
-    document.getElementById('rev-rarity').textContent = rarityLabel(item.rarity);
-    document.getElementById('rev-rarity').style.cssText = `--rarity-color:${col};color:${col};border-color:${col}`;
-    document.getElementById('rev-value').textContent = `Scrap value: ${RARITY[item.rarity].scrap} 🗝️`;
-    document.getElementById('rev-brand').innerHTML = `Brought to you by <span>${brand}</span>`;
-
-    ov.classList.add('open');
-  }, 650);
-}
-
-function buildRaysGradient(c) {
-  const t = 'transparent';
-  return `conic-gradient(${c} 0deg,${t} 8deg,${t} 22deg,${c} 30deg,${t} 38deg,${t} 52deg,${c} 60deg,${t} 68deg,${t} 82deg,${c} 90deg,${t} 98deg,${t} 112deg,${c} 120deg,${t} 128deg,${t} 142deg,${c} 150deg,${t} 158deg,${t} 172deg,${c} 180deg,${t} 188deg,${t} 202deg,${c} 210deg,${t} 218deg,${t} 232deg,${c} 240deg,${t} 248deg,${t} 262deg,${c} 270deg,${t} 278deg,${t} 292deg,${c} 300deg,${t} 308deg,${t} 322deg,${c} 330deg,${t} 338deg,${t} 352deg,${c} 360deg)`;
-}
-
-function collectItem() {
-  if (!pendingItem) return;
-  const invItem = {
-    uid     : state.nextUid++,
-    itemId  : pendingItem.id,
-    name    : pendingItem.name,
-    emoji   : pendingItem.emoji,
-    rarity  : pendingItem.rarity,
-    brand   : currentAdBrand || 'ExampleCo™',
-    scrapVal: RARITY[pendingItem.rarity].scrap,
-    acquiredAt: Date.now(),
-  };
-  state.inventory.push(invItem);
-  pendingItem = null;
-  saveState();
-
+function resetOpenView() {
   document.getElementById('reveal-overlay').classList.remove('open');
   document.getElementById('open-preroll').style.display = 'flex';
   document.getElementById('open-rolling').style.display = 'none';
   document.getElementById('open-no-keys').style.display = 'none';
   document.getElementById('open-watch-btn').style.display = 'none';
-
-  showToast(`🎒 ${invItem.emoji} Added to inventory!`);
-  refreshUI();
 }
-
-function openAgain() {
+function startOpening() {
+  if (busy) return;
+  if (state.keys < CONFIG.CASE_COST) {
+    document.getElementById('open-no-keys').style.display = 'block';
+    document.getElementById('open-watch-btn').style.display = 'block';
+    Audio.button(); return;
+  }
+  state.keys -= CONFIG.CASE_COST; state.stats.casesOpened++;
+  const winner = rollWinner(); pendingItem = winner;
+  if (!state.stats.bestRarity || RARITY_ORDER.indexOf(winner.rarity) > RARITY_ORDER.indexOf(state.stats.bestRarity)) state.stats.bestRarity = winner.rarity;
+  saveState(); refreshUI(); Audio.caseClick();
+  const cards = Array.from({ length:NUM_CARDS }, (_, i) => i === WIN_IDX ? winner : reelItem());
+  const strip = buildReelDOM(cards);
+  document.getElementById('open-preroll').style.display = 'none';
+  document.getElementById('open-rolling').style.display = 'flex';
   document.getElementById('reveal-overlay').classList.remove('open');
-  document.getElementById('open-rolling').style.display  = 'none';
-  document.getElementById('open-preroll').style.display  = 'flex';
-  if (pendingItem) collectItem();   // auto-collect pending
-  setTimeout(() => startOpening(), 50);
+  busy = true;
+  setTimeout(() => animateReel(strip, winner), 180);
 }
-
-/* ─────────────────────────────────────────────────────────────────
-   SCRAPPING
-   ───────────────────────────────────────────────────────────────── */
-function scrapItem(uid) {
-  const idx  = state.inventory.findIndex(i => i.uid === uid);
-  if (idx < 0) return;
-  const item = state.inventory[idx];
-  state.inventory.splice(idx, 1);
-  state.keys += item.scrapVal;
-  state.stats.itemsScrapped++;
-  saveState();
-  Audio.scrap();
-  showToast(`🗑️ Scrapped for +${item.scrapVal} 🗝️`);
-  renderInventory();
+function animateReel(strip, winner) {
+  const center = document.querySelector('.reel-container').offsetWidth / 2;
+  const START_IDX = 3;
+  const startX = center - START_IDX * CARD_STEP - CARD_W/2 - 5;
+  const endX = center - WIN_IDX * CARD_STEP - CARD_W/2 - 5 + (Math.random() - .5) * (CARD_W * .7);
+  const DURATION = 7200, ease = t => 1 - Math.pow(1 - t, 5);   // quintic ease-out
+  let t0 = null, last = START_IDX;
+  strip.style.transform = `translateX(${startX}px)`;
+  function frame(now) {
+    if (!t0) t0 = now;
+    const el = Math.min(now - t0, DURATION), e = ease(el / DURATION), x = startX + (endX - startX) * e;
+    strip.style.transform = `translateX(${x}px)`;
+    const cur = Math.round((center - x - CARD_W/2 - 5) / CARD_STEP);
+    if (cur !== last && cur >= 0 && cur < NUM_CARDS) {
+      const speed = Math.abs((1 - e) * (endX - startX) / CARD_STEP / 7.2);
+      Audio.tick(strip.children[cur]?.dataset.r || 'common', Math.min(speed/4, 1)); last = cur;
+    }
+    if (el < DURATION) requestAnimationFrame(frame);
+    else setTimeout(() => revealWinner(winner), 500);
+  }
+  requestAnimationFrame(frame);
+}
+function buildRaysGradient(c) {
+  const t = 'transparent', parts = [];
+  for (let a = 0; a < 360; a += 30) parts.push(`${c} ${a}deg`, `${t} ${a+8}deg`, `${t} ${a+22}deg`);
+  return `conic-gradient(${parts.join(',')},${c} 360deg)`;
+}
+function revealWinner(item) {
+  const col = rarityColor(item.rarity);
+  Array.from(document.getElementById('reel-strip').children).forEach((c, i) => c.style.opacity = i === WIN_IDX ? '1' : '.2');
+  Particles.burst(innerWidth/2, innerHeight/2, col, { common:25, uncommon:40, rare:65, epic:85, legendary:120, ultra:200 }[item.rarity] || 40);
+  Audio.reveal(item.rarity);
+  if (item.rarity === 'ultra') { flashScreen('#ffd70088'); shakeApp(); }
+  else if (item.rarity === 'legendary') flashScreen('#eb4b4b55');
+  else if (item.rarity === 'epic') flashScreen('#d14eff44');
+  setTimeout(() => {
+    document.getElementById('reveal-rays').style.background = buildRaysGradient(col);
+    document.getElementById('reveal-glow').style.background = `radial-gradient(circle,${col} 0%,transparent 70%)`;
+    document.querySelector('.reveal-inner').style.setProperty('--rarity-color', col);
+    document.getElementById('rev-emoji').textContent = item.emoji;
+    document.getElementById('rev-name').textContent = item.name;
+    const rb = document.getElementById('rev-rarity'); rb.textContent = rarityLabel(item.rarity); rb.style.color = col; rb.style.borderColor = col;
+    document.getElementById('rev-value').textContent = `Scrap value: ${RARITY[item.rarity].scrap} 🗝️`;
+    document.getElementById('rev-brand').innerHTML = `Sponsored by <span>${currentAdBrand || DEMO_BRANDS[0]}</span>`;
+    document.getElementById('reveal-overlay').classList.add('open');
+    busy = false;
+  }, 650);
+}
+function collectItem(silent=false) {
+  if (!pendingItem) return;
+  const inv = { uid:state.nextUid++, itemId:pendingItem.id, name:pendingItem.name, emoji:pendingItem.emoji, rarity:pendingItem.rarity,
+                brand:currentAdBrand || DEMO_BRANDS[0], scrapVal:RARITY[pendingItem.rarity].scrap, acquiredAt:Date.now() };
+  state.inventory.push(inv); pendingItem = null; saveState();
+  resetOpenView();
+  if (!silent) showToast(`🎒 ${inv.emoji} Added to inventory!`);
   refreshUI();
 }
+function openAgain(){ if (pendingItem) collectItem(true); resetOpenView(); setTimeout(startOpening, 50); }
 
+/* ═══════════════════════════════════════════════════════════════════
+   SCRAPPING
+   ═══════════════════════════════════════════════════════════════════ */
+function scrapItem(uid) {
+  const idx = state.inventory.findIndex(i => i.uid === uid); if (idx < 0) return;
+  const it = state.inventory.splice(idx, 1)[0];
+  state.keys += it.scrapVal; state.stats.itemsScrapped++; saveState();
+  Audio.scrap(); showToast(`🗑️ Scrapped for +${it.scrapVal} 🗝️`);
+  renderInventory(); refreshUI();
+}
 function scrapAllCommons() {
   const commons = state.inventory.filter(i => i.rarity === 'common');
-  const sets    = Math.floor(commons.length / CONFIG.COMMONS_FOR_KEY);
-  if (sets < 1) { showToast('Need 5 commons to bulk-scrap!'); return; }
-  const toRemove = commons.slice(0, sets * CONFIG.COMMONS_FOR_KEY);
-  toRemove.forEach(it => {
-    state.inventory.splice(state.inventory.findIndex(i => i.uid === it.uid), 1);
-  });
-  state.keys += sets;
-  state.stats.itemsScrapped += toRemove.length;
-  saveState();
-  Audio.ding(sets);
-  showToast(`🗑️ Scrapped ${toRemove.length} commons for +${sets} 🗝️`);
-  renderInventory();
-  refreshUI();
+  const sets = Math.floor(commons.length / CONFIG.COMMONS_FOR_KEY);
+  if (sets < 1) { showToast(`Need ${CONFIG.COMMONS_FOR_KEY} commons to bulk-scrap!`); return; }
+  const rm = new Set(commons.slice(0, sets * CONFIG.COMMONS_FOR_KEY).map(i => i.uid));
+  state.inventory = state.inventory.filter(i => !rm.has(i.uid));
+  state.keys += sets; state.stats.itemsScrapped += rm.size; saveState();
+  Audio.ding(sets); showToast(`🗑️ Scrapped ${rm.size} commons for +${sets} 🗝️`);
+  renderInventory(); refreshUI();
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   SCREEN MANAGEMENT
-   ───────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   NAVIGATION
+   ═══════════════════════════════════════════════════════════════════ */
+let currentScreen = 's-home';
+const TAB_OF = { 's-home':'s-home','s-ad':'s-home','s-open':'s-open','s-games':'s-games','s-roulette':'s-games','s-blackjack':'s-games',
+                 's-race':'s-games','s-hilo':'s-games','s-mine':'s-games','s-inv':'s-inv','s-stats':'s-stats' };
 function goTo(id) {
+  if (busy && id !== currentScreen) { showToast('⏳ Wait for the current round to finish'); return; }
   Audio.button();
+  if (currentScreen === 's-ad' && id !== 's-ad') { clearInterval(adTimer); adTimer = null; }
+  if (currentScreen === 's-open' && id !== 's-open' && pendingItem) collectItem(true);
+  if (currentScreen === 's-mine' && id !== 's-mine') msStopTimer();
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const target = document.getElementById(id);
-  if (target) target.classList.add('active');
+  const target = document.getElementById(id); if (!target) return;
+  target.classList.add('active'); target.scrollTop = 0; currentScreen = id;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === TAB_OF[id]));
 
-  if (id === 's-ad')   watchAd();
-  if (id === 's-inv')  renderInventory();
+  if (id === 's-ad') watchAd();
+  if (id === 's-inv') renderInventory();
   if (id === 's-stats') renderStats();
-  if (id === 's-open') {
-    document.getElementById('open-no-keys').style.display   = 'none';
-    document.getElementById('open-watch-btn').style.display = 'none';
-    document.getElementById('open-preroll').style.display   = 'flex';
-    document.getElementById('open-rolling').style.display   = 'none';
-    document.getElementById('reveal-overlay').classList.remove('open');
-  }
+  if (id === 's-open') resetOpenView();
+  if (id === 's-mine') msResumeTimer();
   refreshUI();
 }
 
-/* ─────────────────────────────────────────────────────────────────
-   UI REFRESH
-   ───────────────────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+   UI REFRESH / RENDER
+   ═══════════════════════════════════════════════════════════════════ */
 function refreshUI() {
-  const k = state.keys;
-  document.querySelectorAll('#keys-count, #open-keys').forEach(el => el.textContent = k);
-
-  // Home button states
-  const dur    = getAdDuration();
-  const btnOH  = document.getElementById('btn-open-home');
-  const secEl  = document.getElementById('home-ad-sec');
-  const badge  = document.getElementById('home-timer-badge');
-  if (secEl)  secEl.textContent  = `${dur}s`;
-  if (badge)  badge.textContent  = `⏱ Ad duration: ${dur}s`;
-  if (btnOH)  btnOH.disabled     = (k < CONFIG.CASE_COST);
+  document.querySelectorAll('#keys-count,#open-keys').forEach(el => el.textContent = state.keys);
+  document.getElementById('coins-count').textContent = state.coins.toLocaleString();
+  const dur = getAdDuration();
+  document.getElementById('home-ad-sec').textContent = `${dur}s · +1🗝️ +100💰`;
+  document.getElementById('home-timer-badge').textContent = `⏱ Ad duration: ${dur}s`;
+  document.getElementById('btn-open-home').disabled = state.keys < CONFIG.CASE_COST;
 }
-
-/* ─────────────────────────────────────────────────────────────────
-   RENDER INVENTORY
-   ───────────────────────────────────────────────────────────────── */
 function renderInventory() {
   const grid = document.getElementById('inv-grid');
-  const commons = state.inventory.filter(i => i.rarity === 'common');
-
-  // Stats row
-  document.getElementById('inv-stats-row').textContent =
-    `${state.inventory.length} items`;
-
-  // Common bulk-scrap bar
-  const csBar = document.getElementById('common-scrap-bar');
-  if (commons.length >= 1) {
-    csBar.style.display = 'flex';
-    document.getElementById('common-count').textContent = commons.length;
-  } else {
-    csBar.style.display = 'none';
-  }
-
+  const commons = state.inventory.filter(i => i.rarity === 'common').length;
+  document.getElementById('inv-stats-row').textContent = `${state.inventory.length} items`;
+  document.getElementById('common-scrap-bar').style.display = commons ? 'flex' : 'none';
+  document.getElementById('common-count').textContent = commons;
   if (!state.inventory.length) {
-    grid.innerHTML = `<div class="inv-empty">
-      <div class="inv-empty-icon">🎒</div>
-      Your inventory is empty.<br>Open some cases!
-    </div>`;
-    return;
+    grid.innerHTML = `<div class="inv-empty"><div class="inv-empty-icon">🎒</div>Your inventory is empty.<br>Open some cases!</div>`; return;
   }
-
-  // Sort: rarest first
-  const sorted = [...state.inventory].sort((a,b) =>
-    RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity));
-
-  grid.innerHTML = sorted.map(item => {
-    const col = rarityColor(item.rarity);
-    return `<div class="inv-card" data-r="${item.rarity}" style="--rarity-color:${col}">
-      <button class="inv-scrap-btn" onclick="scrapItem(${item.uid});event.stopPropagation()" title="Scrap for ${item.scrapVal} keys">🗑️ ${item.scrapVal}k</button>
-      <span class="inv-emoji">${item.emoji}</span>
-      <span class="inv-name">${item.name}</span>
-      <div class="inv-rarity-dot" style="background:${col}"></div>
-      <span class="inv-brand">${item.brand}</span>
-    </div>`;
+  grid.innerHTML = [...state.inventory].sort((a,b) => RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity)).map(it => {
+    const col = rarityColor(it.rarity);
+    return `<div class="inv-card" data-r="${it.rarity}" style="--rarity-color:${col}">
+      <button class="inv-scrap-btn" onclick="scrapItem(${it.uid})" title="Scrap for ${it.scrapVal} keys">🗑️ ${it.scrapVal}🗝️</button>
+      <span class="inv-emoji">${it.emoji}</span><span class="inv-name">${it.name}</span>
+      <div class="inv-rarity-dot" style="background:${col}"></div><span class="inv-brand">Sponsored by ${it.brand}</span></div>`;
   }).join('');
 }
-
-/* ─────────────────────────────────────────────────────────────────
-   RENDER STATS
-   ───────────────────────────────────────────────────────────────── */
+function statCard(val, lbl, color){ return `<div class="stat-card"><div class="stat-val" ${color?`style="color:${color};font-size:1.15rem"`:''}>${val}</div><div class="stat-lbl">${lbl}</div></div>`; }
 function renderStats() {
   const s = state.stats;
-  const best = s.bestRarity ? `${RARITY[s.bestRarity]?.label || s.bestRarity}` : 'None';
-
-  document.getElementById('stats-grid').innerHTML = `
-    <div class="stat-card"><div class="stat-val">${s.casesOpened}</div><div class="stat-lbl">Cases Opened</div></div>
-    <div class="stat-card"><div class="stat-val">${s.adsWatched}</div><div class="stat-lbl">Ads Watched</div></div>
-    <div class="stat-card"><div class="stat-val">${state.daily.streak || 1}</div><div class="stat-lbl">Day Streak 🔥</div></div>
-    <div class="stat-card" style="color:${s.bestRarity ? rarityColor(s.bestRarity):'inherit'}">
-      <div class="stat-val" style="font-size:1.2rem">${best}</div>
-      <div class="stat-lbl">Best Pull</div>
-    </div>
-  `;
-
-  const drRows = document.getElementById('drop-rate-rows');
-  drRows.innerHTML = Object.entries(RARITY).map(([r, data]) => {
-    const pct   = data.weight;
-    const width = Math.max(2, pct);
-    return `<div class="rate-row">
-      <div class="rate-dot" style="background:${data.color}"></div>
-      <span class="rate-name" style="color:${data.color}">${data.label}</span>
-      <div class="rate-bar-wrap"><div class="rate-bar-fill" style="width:${width}%;background:${data.color}"></div></div>
-      <span class="rate-pct">${pct}%</span>
-    </div>`;
-  }).join('');
-
-  const best4AD = getBestRarity();
-  const adRows  = document.getElementById('adt-rows');
-  adRows.innerHTML = RARITY_ORDER.concat(['none']).reverse().filter(r => r !== 'none' || true).map(r => {
-    if (r === 'none') {
-      const active = best4AD === 'none';
-      return `<div class="adt-row">
-        <div class="adt-dot" style="background:#555"></div>
-        <span class="adt-rarity" style="color:#777">No items yet</span>
-        <span class="adt-time ${active?'adt-active':''}" style="color:#777">${CONFIG.AD_DURATION.none}s</span>
-      </div>`;
-    }
-    const data   = RARITY[r];
-    const active = r === best4AD;
-    const dur    = CONFIG.AD_DURATION[r];
-    return `<div class="adt-row">
-      <div class="adt-dot" style="background:${data.color}"></div>
-      <span class="adt-rarity" style="color:${data.color}">${data.label}</span>
-      <span class="adt-time ${active?'adt-active':''}" style="color:${active?'var(--gold)':data.color}">${dur}s ${active?'← you':''}${dur===5?'⭐':''}</span>
-    </div>`;
+  document.getElementById('stats-grid').innerHTML =
+    statCard(s.casesOpened, 'Cases Opened') + statCard(s.adsWatched, 'Ads Watched') +
+    statCard(state.daily.streak || 1, 'Day Streak 🔥') +
+    statCard(s.bestRarity ? rarityLabel(s.bestRarity) : 'None', 'Best Pull', s.bestRarity ? rarityColor(s.bestRarity) : '#777');
+  const pct = (w, n) => n ? Math.round(w / n * 100) + '%' : '—';
+  document.getElementById('game-stats-grid').innerHTML =
+    statCard(s.rouletteSpins, `Roulette Spins · ${pct(s.rouletteWins, s.rouletteSpins)} won`) +
+    statCard(s.bjHands, `BJ Hands · ${pct(s.bjWins, s.bjHands)} won`) +
+    statCard(s.races, `Races · ${pct(s.raceWins, s.races)} won`) +
+    statCard(s.hiloRounds, `Hi-Lo Guesses · best streak ${s.hiloBestStreak}`) +
+    statCard(s.mineGames, `Minesweeper · ${s.mineWins} cleared`) +
+    statCard(s.biggestWin.toLocaleString(), 'Biggest Win 💰') +
+    statCard('+' + s.coinsWon.toLocaleString(), 'Coins Won', '#2ecc71') +
+    statCard('-' + s.coinsLost.toLocaleString(), 'Coins Lost', '#ff5050');
+  document.getElementById('drop-rate-rows').innerHTML = Object.values(RARITY).map(d => `<div class="rate-row">
+      <div class="rate-dot" style="background:${d.color}"></div><span class="rate-name" style="color:${d.color}">${d.label}</span>
+      <div class="rate-bar-wrap"><div class="rate-bar-fill" style="width:${Math.max(2,d.weight)}%;background:${d.color}"></div></div>
+      <span class="rate-pct">${d.weight}%</span></div>`).join('');
+  const bestAd = getBestRarity();
+  document.getElementById('adt-rows').innerHTML = ['none', ...RARITY_ORDER].reverse().map(r => {
+    const active = r === bestAd, dur = CONFIG.AD_DURATION[r];
+    const color = r === 'none' ? '#777' : RARITY[r].color, label = r === 'none' ? 'No items yet' : RARITY[r].label;
+    return `<div class="adt-row"><div class="adt-dot" style="background:${color}"></div><span class="adt-rarity" style="color:${color}">${label}</span>
+      <span class="adt-time ${active?'adt-active':''}" style="color:${active?'var(--gold)':color}">${dur}s ${active?'← you':''}${dur===5?'⭐':''}</span></div>`;
   }).join('');
 }
+</script>
 
-/* ─────────────────────────────────────────────────────────────────
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   SHARED CARD HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+const SUITS = ['♠','♥','♦','♣'], RANKS = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+function newDeck(){ const d = []; for (const s of SUITS) for (const r of RANKS) d.push({ r, s }); return shuffle(d); }
+function cardHTML(c, hidden=false, big=false) {
+  if (hidden) return `<div class="pcard back${big?' big':''}"></div>`;
+  const red = c.s === '♥' || c.s === '♦';
+  return `<div class="pcard${red?' red':''}${big?' big':''}"><span class="pr">${c.r}</span><span class="ps">${c.s}</span><span class="pr2">${c.r}</span></div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🎡 ROULETTE (European, single zero)
+   ═══════════════════════════════════════════════════════════════════ */
+const RL_ORDER = [0,32,15,19,4,21,2,25,17,34,6,27,13,36,11,30,8,23,10,5,24,16,33,1,20,14,31,9,22,18,29,7,28,12,35,3,26];
+const ROULETTE_REDS = [1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+const rlColor = n => n === 0 ? 'green' : ROULETTE_REDS.includes(n) ? 'red' : 'black';
+const RL_BETS = {
+  red  :{ l:'🔴 Red',   m:2, t:n => rlColor(n) === 'red' },   black:{ l:'⚫ Black', m:2, t:n => rlColor(n) === 'black' },
+  odd  :{ l:'Odd',      m:2, t:n => n > 0 && n % 2 === 1 },   even :{ l:'Even',    m:2, t:n => n > 0 && n % 2 === 0 },
+  low  :{ l:'1–18',     m:2, t:n => n >= 1 && n <= 18 },      high :{ l:'19–36',   m:2, t:n => n >= 19 },
+  d1   :{ l:'1st 12',   m:3, t:n => n >= 1 && n <= 12 },      d2   :{ l:'2nd 12',  m:3, t:n => n >= 13 && n <= 24 },
+  d3   :{ l:'3rd 12',   m:3, t:n => n >= 25 },                c1   :{ l:'Col 1',   m:3, t:n => n > 0 && n % 3 === 1 },
+  c2   :{ l:'Col 2',    m:3, t:n => n > 0 && n % 3 === 2 },   c3   :{ l:'Col 3',   m:3, t:n => n > 0 && n % 3 === 0 },
+};
+let rlSel = 'red', rlRot = 0, rlSpinning = false, rlHistory = [];
+const RL_HEX = { red:'#c0392b', black:'#161616', green:'#0a8f3c' };
+
+function rlInit() {
+  const seg = 360 / 37, wheel = document.getElementById('rl-wheel');
+  wheel.style.background = `conic-gradient(${RL_ORDER.map((n,i) => `${RL_HEX[rlColor(n)]} ${i*seg}deg ${(i+1)*seg}deg`).join(',')})`;
+  wheel.innerHTML = RL_ORDER.map((n,i) => `<span style="transform:translate(-50%,-50%) rotate(${(i+.5)*seg}deg) translateY(calc(-1 * var(--lr)))">${n}</span>`).join('');
+  document.getElementById('rl-bets').innerHTML = Object.entries(RL_BETS).map(([k,b]) =>
+    `<button class="rl-bet" data-k="${k}" onclick="rlPick('${k}')">${b.l}<small>pays ${b.m}x</small></button>`).join('');
+  let nums = `<button class="rl-num green" data-k="n:0" onclick="rlPick('n:0')" style="grid-row:span 3">0</button>`;
+  for (let row = 3; row >= 1; row--) for (let col = 0; col < 12; col++) { const n = col*3 + row; nums += `<button class="rl-num ${rlColor(n)}" data-k="n:${n}" onclick="rlPick('n:${n}')">${n}</button>`; }
+  document.getElementById('rl-nums').innerHTML = nums;
+  rlPick('red', true);
+}
+function rlPick(k, silent) {
+  if (rlSpinning) return;
+  rlSel = k; if (!silent) Audio.click();
+  document.querySelectorAll('#rl-bets .rl-bet,#rl-nums .rl-num').forEach(b => b.classList.toggle('sel', b.dataset.k === k));
+  const label = k.startsWith('n:') ? `Number ${k.slice(2)} (36x)` : `${RL_BETS[k].l} (${RL_BETS[k].m}x)`;
+  setMsg('rl-msg', `Bet on: <b>${label}</b>`);
+}
+function rlSpin() {
+  if (rlSpinning) return;
+  const bet = getBet('rl-bet'); if (!bet) return;
+  spendCoins(bet); hideGameAd('roulette');
+  rlSpinning = busy = true; document.getElementById('rl-spin').disabled = true;
+  const n = Math.floor(Math.random() * 37), seg = 360 / 37;
+  const center = (RL_ORDER.indexOf(n) + .5) * seg, cur = ((rlRot % 360) + 360) % 360;
+  rlRot += 360 * 6 + ((360 - center - cur) % 360 + 360) % 360 + (Math.random() - .5) * seg * .6;
+  const wheel = document.getElementById('rl-wheel');
+  wheel.style.transition = 'transform 4.5s cubic-bezier(.12,.7,.15,1)';
+  wheel.style.transform = `rotate(${rlRot}deg)`;
+  document.getElementById('rl-hub').textContent = '…';
+  setMsg('rl-msg', 'No more bets! 🎲');
+  Audio.rouletteSpin(4.5);
+  setTimeout(() => rlResult(n, bet), 4600);
+}
+function rlResult(n, bet) {
+  const col = rlColor(n), hub = document.getElementById('rl-hub');
+  hub.textContent = n; hub.style.background = `radial-gradient(circle,${RL_HEX[col]},#000)`;
+  rlHistory.unshift(n); rlHistory = rlHistory.slice(0, 12);
+  document.getElementById('rl-hist').innerHTML = rlHistory.map(h => `<i style="background:${RL_HEX[rlColor(h)]}">${h}</i>`).join('');
+  const single = rlSel.startsWith('n:');
+  const won = single ? +rlSel.slice(2) === n : RL_BETS[rlSel].t(n);
+  const mult = single ? 36 : RL_BETS[rlSel].m;
+  state.stats.rouletteSpins++;
+  if (won) {
+    const pay = bet * mult; addCoins(pay); state.stats.rouletteWins++; recordRound(pay - bet);
+    setMsg('rl-msg', `${n} ${col.toUpperCase()} — YOU WIN +${pay.toLocaleString()} 💰`, 'win');
+    Audio.win(); bigWin(single ? '#ffd700' : '#2ecc71', single ? 180 : 70);
+    if (single) { flashScreen('#ffd70066'); shakeApp(); }
+  } else {
+    recordRound(-bet); setMsg('rl-msg', `${n} ${col.toUpperCase()} — You lost ${bet} 💰`, 'lose'); Audio.lose();
+  }
+  rlSpinning = busy = false; document.getElementById('rl-spin').disabled = false;
+  showGameAd('roulette');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🃏 BLACKJACK
+   ═══════════════════════════════════════════════════════════════════ */
+let bj = { deck:[], p:[], d:[], bet:0, active:false, hide:true };
+const bjCardVal = c => c.r === 'A' ? 11 : ['J','Q','K'].includes(c.r) ? 10 : +c.r;
+function handVal(h){ let t = 0, a = 0; for (const c of h) { t += bjCardVal(c); if (c.r === 'A') a++; } while (t > 21 && a) { t -= 10; a--; } return t; }
+function bjDraw(){ if (bj.deck.length < 10) bj.deck = newDeck(); return bj.deck.pop(); }
+function bjRender() {
+  document.getElementById('bj-dealer').innerHTML = bj.d.map((c,i) => cardHTML(c, i === 1 && bj.hide)).join('');
+  document.getElementById('bj-player').innerHTML = bj.p.map(c => cardHTML(c)).join('');
+  document.getElementById('bj-pval').textContent = bj.p.length ? handVal(bj.p) : '';
+  document.getElementById('bj-dval').textContent = !bj.d.length ? '' : bj.hide ? bjCardVal(bj.d[0]) + ' + ?' : handVal(bj.d);
+}
+function bjControls(playing) {
+  document.getElementById('bj-betarea').style.display = playing ? 'none' : 'flex';
+  document.getElementById('bj-actions').style.display = playing ? 'grid' : 'none';
+  document.getElementById('bj-double').disabled = !(playing && bj.p.length === 2 && state.coins >= bj.bet);
+}
+function bjDeal() {
+  if (bj.active) return;
+  const bet = getBet('bj-bet'); if (!bet) return;
+  spendCoins(bet); hideGameAd('blackjack');
+  bj = { deck: bj.deck.length >= 15 ? bj.deck : newDeck(), p:[], d:[], bet, active:true, hide:true };
+  bj.p.push(bjDraw()); bj.d.push(bjDraw()); bj.p.push(bjDraw()); bj.d.push(bjDraw());
+  [0, .12, .24, .36].forEach(t => Audio.swish(t));
+  setMsg('bj-msg', `Bet: ${bet} 💰 — Hit or Stand?`);
+  bjRender(); bjControls(true);
+  if (handVal(bj.p) === 21) setTimeout(() => {
+    bj.hide = false; bjRender();
+    handVal(bj.d) === 21 ? bjEnd('push', 'Both have Blackjack — Push') : bjEnd('bj', '🂡 BLACKJACK! Pays 3:2');
+  }, 600);
+}
+function bjHit() {
+  if (!bj.active) return;
+  bj.p.push(bjDraw()); Audio.swish(); bjRender(); bjControls(true);
+  const v = handVal(bj.p);
+  if (v > 21) { bj.hide = false; bjRender(); bjEnd('bust', `💥 BUST with ${v}!`); }
+  else if (v === 21) bjStand();
+}
+function bjDouble() {
+  if (!bj.active || bj.p.length !== 2 || state.coins < bj.bet) return;
+  spendCoins(bj.bet); bj.bet *= 2;
+  bj.p.push(bjDraw()); Audio.swish(); bjRender();
+  const v = handVal(bj.p);
+  if (v > 21) { bj.hide = false; bjRender(); bjEnd('bust', `💥 BUST with ${v}!`); } else bjStand();
+}
+function bjStand() {
+  if (!bj.active) return;
+  bj.active = false; busy = true;
+  document.getElementById('bj-actions').style.display = 'none';
+  bj.hide = false; Audio.swish(); bjRender();
+  const step = () => {
+    if (handVal(bj.d) < 17) { bj.d.push(bjDraw()); Audio.swish(); bjRender(); setTimeout(step, 550); return; }
+    const p = handVal(bj.p), d = handVal(bj.d);
+    if (d > 21) bjEnd('win', `Dealer busts with ${d}! You win`);
+    else if (p > d) bjEnd('win', `${p} beats ${d}! You win`);
+    else if (p < d) bjEnd('lose', `Dealer wins ${d} to ${p}`);
+    else bjEnd('push', `Push at ${p}`);
+  };
+  setTimeout(step, 550);
+}
+function bjEnd(res, text) {
+  bj.active = false; busy = false;
+  const bet = bj.bet; let pay = 0;
+  if (res === 'bj') pay = Math.floor(bet * 2.5); else if (res === 'win') pay = bet * 2; else if (res === 'push') pay = bet;
+  if (pay) addCoins(pay);
+  recordRound(pay - bet); state.stats.bjHands++;
+  if (res === 'win' || res === 'bj') {
+    state.stats.bjWins++; setMsg('bj-msg', `${text} +${pay} 💰`, 'win'); Audio.win(); bigWin(res === 'bj' ? '#ffd700' : '#2ecc71', res === 'bj' ? 150 : 60);
+  } else if (res === 'push') { setMsg('bj-msg', `${text} — bet returned`, 'push'); Audio.ding(1); }
+  else { setMsg('bj-msg', `${text} −${bet} 💰`, 'lose'); Audio.buzz(); }
+  saveState(); bjControls(false); showGameAd('blackjack');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🏇 ANIMAL RACE
+   ═══════════════════════════════════════════════════════════════════ */
+const RUNNERS = [{e:'🐎',n:'Thunder'},{e:'🐇',n:'Bolt'},{e:'🐅',n:'Stripe'},{e:'🦊',n:'Foxy'},{e:'🦬',n:'Bull'},{e:'🦅',n:'Eagle'}];
+let race = { odds:[], pick:null, running:false };
+function raceInit() {
+  document.getElementById('race-track').innerHTML = '<div class="finish"></div>' +
+    RUNNERS.map((r,i) => `<div class="lane"><span class="lnum">${i+1}</span><span class="runner" id="rn-${i}">${r.e}</span></div>`).join('');
+  raceNewOdds();
+}
+function raceNewOdds() {
+  race.odds = RUNNERS.map(() => 2 + Math.floor(Math.random() * 5));   // 2:1 … 6:1
+  document.getElementById('race-picks').innerHTML = RUNNERS.map((r,i) =>
+    `<button class="rpick${race.pick===i?' sel':''}" onclick="racePick(${i})"><span class="re">${r.e}</span><span class="rn">${r.n}</span><span class="ro">${race.odds[i]}:1</span></button>`).join('');
+}
+function racePick(i) {
+  if (race.running) return;
+  race.pick = i; Audio.click();
+  document.querySelectorAll('.rpick').forEach((b,j) => b.classList.toggle('sel', j === i));
+  setMsg('race-msg', `Backing <b>${RUNNERS[i].e} ${RUNNERS[i].n}</b> at ${race.odds[i]}:1`);
+}
+function raceStart() {
+  if (race.running) return;
+  if (race.pick === null) { showToast('Pick a runner first!'); Audio.lose(); return; }
+  const bet = getBet('race-bet'); if (!bet) return;
+  spendCoins(bet); hideGameAd('race');
+  race.running = busy = true; document.getElementById('race-go').disabled = true;
+  // Winner chosen with probability ∝ 1/odds (favourites win more often)
+  const w = race.odds.map(o => 1 / o), tot = w.reduce((a,b) => a + b, 0);
+  let r = Math.random() * tot, winner = 0;
+  for (let i = 0; i < w.length; i++) { r -= w[i]; if (r <= 0) { winner = i; break; } }
+  const times = RUNNERS.map((_, i) => i === winner ? 3000 : 3150 + Math.random() * 900);
+  const ph = RUNNERS.map(() => Math.random() * 6.28), fq = RUNNERS.map(() => 150 + Math.random() * 120);
+  const els = RUNNERS.map((_, i) => document.getElementById('rn-' + i));
+  const maxT = Math.max(...times);
+  setMsg('race-msg', 'And they\'re off! 🏁'); Audio.fanfare();
+  let t0 = null;
+  function frame(now) {
+    if (!t0) t0 = now;
+    const el = now - t0;
+    els.forEach((e, i) => {
+      const t = Math.min(el / times[i], 1);
+      const p = Math.max(0, Math.min(1, t + .03 * Math.sin(el / fq[i] + ph[i]) * Math.sin(Math.PI * t)));
+      e.style.left = `calc(${p * 100}% - ${p * 44}px)`;
+    });
+    if (el < maxT) requestAnimationFrame(frame); else raceEnd(winner, bet);
+  }
+  requestAnimationFrame(frame);
+}
+function raceEnd(winner, bet) {
+  const W = RUNNERS[winner], odds = race.odds[winner];
+  state.stats.races++;
+  if (winner === race.pick) {
+    const pay = bet * odds + bet; addCoins(pay); state.stats.raceWins++; recordRound(pay - bet);
+    setMsg('race-msg', `${W.e} ${W.n} WINS! You collect +${pay} 💰`, 'win'); Audio.cheer(); bigWin('#2ecc71', 100);
+  } else {
+    recordRound(-bet); setMsg('race-msg', `${W.e} ${W.n} wins at ${odds}:1 — you lost ${bet} 💰`, 'lose'); Audio.lose();
+  }
+  race.running = busy = false; document.getElementById('race-go').disabled = false;
+  showGameAd('race');
+  setTimeout(() => { if (!race.running) { RUNNERS.forEach((_, i) => document.getElementById('rn-' + i).style.left = '0'); raceNewOdds(); } }, 2200);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   🔼 HIGHER OR LOWER
+   ═══════════════════════════════════════════════════════════════════ */
+let hl = { deck:[], cur:null, prev:null, streak:0, active:false };
+const hlVal = c => RANKS.indexOf(c.r) + 2;        // 2..14 (Ace high)
+const hlMult = s => s >= 5 ? 2 : s >= 3 ? 1.5 : 1;
+function hlRender() {
+  document.getElementById('hl-card').innerHTML = hl.cur ? cardHTML(hl.cur, false, true) : cardHTML(null, true, true);
+  document.getElementById('hl-prev').innerHTML = hl.prev ? cardHTML(hl.prev) : '';
+  document.getElementById('hl-streak').textContent = hl.streak;
+  document.getElementById('hl-mult').textContent = hlMult(hl.streak) + 'x';
+  document.getElementById('hl-best').textContent = state.stats.hiloBestStreak;
+  document.getElementById('hl-guess').style.display = hl.active ? 'grid' : 'none';
+  document.getElementById('hl-start').style.display = hl.active ? 'none' : 'flex';
+}
+function hlStart() {
+  hl = { deck:newDeck(), cur:null, prev:null, streak:0, active:true };
+  hl.cur = hl.deck.pop(); Audio.swish(); hideGameAd('hilo');
+  setMsg('hl-msg', 'Higher or lower? Each guess stakes your bet.'); hlRender();
+}
+function hlGuess(dir) {
+  if (!hl.active) return;
+  const bet = getBet('hl-bet'); if (!bet) return;
+  if (!hl.deck.length) hl.deck = newDeck();
+  const next = hl.deck.pop(), cv = hlVal(hl.cur), nv = hlVal(next);
+  const correct = dir === 'hi' ? nv >= cv : nv <= cv;     // equal = player wins
+  const mult = hlMult(hl.streak);
+  hl.prev = hl.cur; hl.cur = next; state.stats.hiloRounds++; Audio.swish();
+  if (correct) {
+    const win = Math.round(bet * mult); addCoins(win); recordRound(win); hl.streak++;
+    state.stats.hiloBestStreak = Math.max(state.stats.hiloBestStreak, hl.streak);
+    setMsg('hl-msg', `✅ ${next.r}${next.s}! +${win} 💰 ${mult > 1 ? `(${mult}x streak bonus)` : ''}`, 'win');
+    Audio.win(); if (hl.streak === 3 || hl.streak === 5) { bigWin('#ffd700', 90); showToast(`🔥 ${hl.streak} streak! Multiplier ${hlMult(hl.streak)}x`); }
+  } else {
+    spendCoins(bet); recordRound(-bet); hl.active = false;
+    setMsg('hl-msg', `❌ ${next.r}${next.s} — wrong! −${bet} 💰 · Game over (streak ${hl.streak})`, 'lose');
+    Audio.lose(); showGameAd('hilo');
+  }
+  saveState(); hlRender();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   💣 MINESWEEPER (8×8, 10 mines)
+   ═══════════════════════════════════════════════════════════════════ */
+const MS_N = 8, MS_MINES = 10;
+let ms = { cells:[], started:false, over:false, flags:0, revealed:0, time:0, timer:null };
+const msNeighbors = i => { const r = Math.floor(i / MS_N), c = i % MS_N, out = [];
+  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) { if (!dr && !dc) continue; const rr = r + dr, cc = c + dc;
+    if (rr >= 0 && rr < MS_N && cc >= 0 && cc < MS_N) out.push(rr * MS_N + cc); } return out; };
+function msNew() {
+  msStopTimer();
+  ms = { cells:Array.from({ length:MS_N*MS_N }, () => ({ mine:false, adj:0, rev:false, flag:false })), started:false, over:false, flags:0, revealed:0, time:0, timer:null };
+  const grid = document.getElementById('ms-grid');
+  grid.innerHTML = ms.cells.map((_, i) => `<div class="ms-cell" data-i="${i}"></div>`).join('');
+  document.getElementById('ms-time').textContent = 0;
+  setMsg('ms-msg', 'Tap to reveal · Long-press / right-click to flag');
+  hideGameAd('mine'); msUpdateCount();
+}
+function msPlace(safe) {
+  const banned = new Set([safe, ...msNeighbors(safe)]);   // first click always opens an area
+  let placed = 0;
+  while (placed < MS_MINES) { const i = Math.floor(Math.random() * MS_N * MS_N); if (!ms.cells[i].mine && !banned.has(i)) { ms.cells[i].mine = true; placed++; } }
+  ms.cells.forEach((c, i) => c.adj = msNeighbors(i).filter(j => ms.cells[j].mine).length);
+}
+function msCellEl(i){ return document.querySelector(`#ms-grid .ms-cell[data-i="${i}"]`); }
+function msPaint(i) {
+  const c = ms.cells[i], el = msCellEl(i);
+  el.className = 'ms-cell' + (c.rev ? ' rev' : '') + (c.rev && !c.mine && c.adj ? ' n' + c.adj : '');
+  el.textContent = c.rev ? (c.mine ? '💣' : (c.adj || '')) : (c.flag ? '🚩' : '');
+}
+function msUpdateCount(){ document.getElementById('ms-left').textContent = MS_MINES - ms.flags; }
+function msStopTimer(){ clearInterval(ms.timer); ms.timer = null; }
+function msResumeTimer(){ if (ms.started && !ms.over && !ms.timer) ms.timer = setInterval(() => { ms.time++; document.getElementById('ms-time').textContent = ms.time; }, 1000); }
+function msReveal(i) {
+  if (ms.over) return;
+  const c = ms.cells[i]; if (c.rev || c.flag) return;
+  if (!ms.started) { ms.started = true; msPlace(i); state.stats.mineGames++; saveState(); msResumeTimer(); }
+  if (c.mine) return msLose(i);
+  const stack = [i];                             // flood fill
+  while (stack.length) {
+    const k = stack.pop(), cell = ms.cells[k];
+    if (cell.rev || cell.flag) continue;
+    cell.rev = true; ms.revealed++; msPaint(k);
+    if (cell.adj === 0) msNeighbors(k).forEach(j => { if (!ms.cells[j].rev && !ms.cells[j].mine) stack.push(j); });
+  }
+  Audio.click();
+  if (ms.revealed === MS_N*MS_N - MS_MINES) msWin();
+}
+function msFlag(i) {
+  if (ms.over) return;
+  const c = ms.cells[i]; if (c.rev) return;
+  if (!c.flag && ms.flags >= MS_MINES) { showToast('No flags left'); return; }
+  c.flag = !c.flag; ms.flags += c.flag ? 1 : -1; msPaint(i); msUpdateCount(); Audio.flag();
+  if (navigator.vibrate) navigator.vibrate(25);
+}
+function msLose(i) {
+  ms.over = true; msStopTimer();
+  ms.cells.forEach((c, k) => { if (c.mine) { c.rev = true; msPaint(k); } });
+  msCellEl(i).classList.add('boom');
+  const loss = Math.min(CONFIG.MINE_LOSS, state.coins);
+  spendCoins(loss); recordRound(-loss);
+  Audio.thud(); shakeApp(); flashScreen('#ff000044');
+  setMsg('ms-msg', `💥 BOOM! You hit a mine — −${loss} 💰`, 'lose');
+  showGameAd('mine');
+}
+function msWin() {
+  ms.over = true; msStopTimer();
+  ms.cells.forEach((c, k) => { if (c.mine && !c.flag) { c.flag = true; msPaint(k); } });
+  ms.flags = MS_MINES; msUpdateCount();
+  addCoins(CONFIG.MINE_WIN); recordRound(CONFIG.MINE_WIN); state.stats.mineWins++; saveState();
+  Audio.win(); Audio.cheer(); bigWin('#d14eff', 150);
+  setMsg('ms-msg', `🏆 Board cleared in ${ms.time}s! +${CONFIG.MINE_WIN} 💰`, 'win');
+  showGameAd('mine');
+}
+function msBindEvents() {
+  const grid = document.getElementById('ms-grid');
+  let pressTimer = null, longPressed = false, lastPointer = 'mouse';
+  const cellIdx = e => { const el = e.target.closest('.ms-cell'); return el ? +el.dataset.i : -1; };
+  grid.addEventListener('pointerdown', e => {
+    lastPointer = e.pointerType; longPressed = false;
+    if (e.button !== 0) return;
+    const i = cellIdx(e); if (i < 0) return;
+    clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => { longPressed = true; msFlag(i); }, 400);
+  });
+  const cancel = () => clearTimeout(pressTimer);
+  grid.addEventListener('pointerleave', cancel); grid.addEventListener('pointercancel', cancel);
+  grid.addEventListener('pointerup', e => {
+    clearTimeout(pressTimer);
+    if (e.button !== 0 || longPressed) return;
+    const i = cellIdx(e); if (i >= 0) msReveal(i);
+  });
+  grid.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    if (lastPointer === 'touch' || lastPointer === 'pen') return;   // touch uses long-press instead
+    const i = cellIdx(e); if (i >= 0) msFlag(i);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════════
    INIT
-   ───────────────────────────────────────────────────────────────── */
+   ═══════════════════════════════════════════════════════════════════ */
 function init() {
   loadState();
+  mountBetControls();
+  rlInit(); raceInit(); hlRender(); msBindEvents(); msNew();
+  bjRender(); bjControls(false);
   refreshUI();
+  mountBannerAds();
   checkDailyBonus();
-
-  // Touch swipe support for reel (bonus)
-  let touchStartX = 0;
-  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive:true });
 }
-
-// Boot
 window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
