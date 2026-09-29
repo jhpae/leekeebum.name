@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>AdDrop — Crate Opening</title>
+
+<!-- ╔═══════════════════════════════════════════════════════════════════════╗
+     ║          ░░░  AD NETWORK CONFIGURATION BLOCK  ░░░                   ║
+     ║                                                                       ║
+     ║  STEP 1 ── Paste your ad network <script> tag below this comment.   ║
+     ║  STEP 2 ── In the JS CONFIG object (first block in <script>):        ║
+     ║             • Set  AD_NETWORK_CONFIGURED : true                      ║
+     ║             • Set  AD_PROVIDER to your network name                  ║
+     ║             • Fill in your ad unit ID / slot below                   ║
+     ║                                                                       ║
+     ║  ► Google AdSense (Rewarded Interstitial):                           ║
+     ║      <script async                                                    ║
+     ║        src="https://pagead2.googlesyndication.com/pagead/js/         ║
+     ║             adsbygoogle.js?client=ca-pub-YOUR_ID"                    ║
+     ║        crossorigin="anonymous"></script>                             ║
+     ║      Then call:  (adsbygoogle = window.adsbygoogle||[]).push({})     ║
+     ║                                                                       ║
+     ║  ► Adsterra:  Paste your direct-link or banner tag here.            ║
+     ║  ► PropellerAds: Paste their SDK snippet here.                       ║
+     ║  ► Any rewarded SDK: paste init snippet, then hook                   ║
+     ║      AD_PROVIDER.requestRewardedAd(onAdComplete)  in watchAd().      ║
+     ║                                                                       ║
+     ║  Without a configured network the game runs in [DEMO] mode:         ║
+     ║  a placeholder countdown awards 1 key — all gameplay still works.   ║
+     ╚═══════════════════════════════════════════════════════════════════════╝ -->
+
+<!-- PASTE AD NETWORK SCRIPT TAG(S) HERE ↓ -->
+
+<style>
+/* ──────────────── RESET & BASE ──────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#07070f;font-family:'Segoe UI',system-ui,sans-serif;color:#dde0ff;-webkit-tap-highlight-color:transparent}
+
+:root{
+  --bg:#07070f;--surf:#10102a;--surf2:#1a1a3a;--border:rgba(255,255,255,.1);
+  --txt:#dde0ff;--muted:#7070a0;--accent:#ff8800;--gold:#ffd700;
+  --c-common:#9ea3ac;--c-uncommon:#5e98d9;--c-rare:#8847ff;
+  --c-epic:#d14eff;--c-legend:#eb4b4b;--c-ultra:#ffd700;
+  --rarity-color:#fff;
+}
+
+/* ──────────────── PARTICLE CANVAS ──────────────── */
+#ptcl{position:fixed;inset:0;pointer-events:none;z-index:900}
+
+/* ──────────────── APP WRAPPER ──────────────── */
+#app{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden}
+
+/* ──────────────── HEADER ──────────────── */
+#hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 18px;background:rgba(10,10,30,.9);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(8px);z-index:100;flex-shrink:0;
+}
+.logo{font-size:1.3rem;font-weight:900;letter-spacing:2px;
+  background:linear-gradient(135deg,#ff8800,#ffd700);-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text}
+.keys-badge{
+  display:flex;align-items:center;gap:6px;background:rgba(255,215,0,.12);
+  border:1px solid rgba(255,215,0,.3);border-radius:20px;padding:5px 14px;
+  font-weight:700;color:var(--gold);font-size:.95rem;
+}
+.keys-badge .ki{font-size:1.1rem}
+
+/* ──────────────── SCREENS ──────────────── */
+.screen{
+  position:absolute;inset:0;top:53px;display:flex;flex-direction:column;
+  align-items:center;overflow-y:auto;padding:20px 16px 30px;
+  opacity:0;pointer-events:none;transition:opacity .3s ease;
+}
+.screen.active{opacity:1;pointer-events:all}
+
+/* ──────────────── HOME SCREEN ──────────────── */
+#s-home{justify-content:flex-start;gap:0}
+.home-hero{display:flex;flex-direction:column;align-items:center;gap:16px;padding:20px 0 24px}
+.case-wrap{position:relative;cursor:pointer;transition:transform .2s}
+.case-wrap:hover{transform:translateY(-6px) scale(1.03)}
+.case-body{
+  width:170px;height:170px;
+  background:linear-gradient(145deg,#c06000,#ff9400,#ff6a00);
+  border-radius:16px;border:3px solid #ffc040;
+  box-shadow:0 0 50px rgba(255,140,0,.5),inset 0 2px 0 rgba(255,255,255,.3);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;position:relative;overflow:hidden;
+}
+.case-body::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 20px,rgba(255,255,255,.05) 20px,rgba(255,255,255,.05) 21px);
+}
+.case-icon{font-size:64px;line-height:1;z-index:1;filter:drop-shadow(0 0 12px rgba(255,215,0,.8))}
+.case-label{font-size:.65rem;font-weight:700;letter-spacing:3px;color:#ffe9c0;z-index:1;opacity:.8}
+
+.home-keys-info{text-align:center;margin-bottom:6px}
+.home-keys-info h3{font-size:.8rem;color:var(--muted);font-weight:500;letter-spacing:1px;text-transform:uppercase}
+.ad-timer-badge{
+  display:inline-block;margin-top:6px;padding:3px 10px;border-radius:10px;
+  background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.35);
+  font-size:.78rem;color:var(--gold);font-weight:600
+}
+
+.home-actions{width:100%;max-width:360px;display:flex;flex-direction:column;gap:10px}
+
+/* ──────────────── BUTTONS ──────────────── */
+.btn{
+  width:100%;padding:14px 18px;border:none;border-radius:10px;
+  font-size:.95rem;font-weight:700;letter-spacing:.5px;cursor:pointer;
+  transition:transform .12s,box-shadow .12s,filter .12s;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn:active{transform:scale(.96)}
+.btn-primary{
+  background:linear-gradient(135deg,#ff8800,#ffaa00);color:#0a0a00;
+  box-shadow:0 4px 20px rgba(255,136,0,.4);
+}
+.btn-primary:hover{box-shadow:0 4px 30px rgba(255,136,0,.6);filter:brightness(1.1)}
+.btn-secondary{
+  background:var(--surf2);color:var(--txt);border:1px solid var(--border);
+}
+.btn-secondary:hover{background:#242450;border-color:rgba(255,255,255,.2)}
+.btn-open{
+  background:linear-gradient(135deg,#1a0050,#4400cc,#6600ff);color:#fff;
+  box-shadow:0 4px 20px rgba(100,0,255,.4);border:1px solid #8840ff;
+}
+.btn-open:hover{box-shadow:0 4px 30px rgba(100,0,255,.6)}
+.btn-open:disabled{opacity:.4;cursor:not-allowed;pointer-events:none}
+.btn-danger{background:rgba(180,30,30,.3);color:#ff6060;border:1px solid #602020}
+.btn-danger:hover{background:rgba(180,30,30,.5)}
+.btn-sm{padding:7px 14px;font-size:.78rem;width:auto;border-radius:7px}
+.btn-back{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.85rem;
+  transition:color .2s,border-color .2s;
+}
+.btn-back:hover{color:var(--txt);border-color:rgba(255,255,255,.3)}
+
+.sub-label{font-size:.72rem;color:rgba(255,255,255,.55);font-weight:500;margin-left:2px}
+
+/* ──────────────── AD SCREEN ──────────────── */
+#s-ad{justify-content:center;gap:20px}
+.ad-screen-inner{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.ad-box{
+  width:100%;max-width:360px;min-height:200px;background:var(--surf);
+  border:2px dashed var(--border);border-radius:12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;padding:24px;text-align:center;position:relative;overflow:hidden;
+}
+.ad-demo-tag{
+  position:absolute;top:8px;left:8px;
+  background:rgba(255,136,0,.2);border:1px solid var(--accent);
+  color:var(--accent);font-size:.65rem;font-weight:700;letter-spacing:2px;
+  padding:2px 8px;border-radius:4px;
+}
+.ad-brand{font-size:1.6rem;font-weight:900;color:var(--muted);opacity:.6;letter-spacing:4px}
+.ad-tagline{font-size:.8rem;color:var(--muted)}
+.ad-timer-ring{
+  width:100px;height:100px;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.ad-timer-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ad-timer-ring circle{
+  fill:none;stroke-width:6;
+  stroke-linecap:round;transition:stroke-dashoffset .9s linear;
+}
+.ring-bg{stroke:rgba(255,255,255,.1)}
+.ring-fg{stroke:var(--accent);stroke-dasharray:283;stroke-dashoffset:0}
+.ad-secs{font-size:2.2rem;font-weight:900;color:var(--accent)}
+.ad-earning-info{text-align:center;font-size:.85rem;color:var(--muted)}
+.ad-earning-info b{color:var(--gold)}
+.ad-rarity-tip{
+  background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);
+  border-radius:8px;padding:10px 16px;text-align:center;font-size:.78rem;color:var(--gold);
+  max-width:320px;
+}
+
+/* ──────────────── OPENING SCREEN ──────────────── */
+#s-open{padding:16px 0;justify-content:flex-start;gap:0}
+.open-header{
+  width:100%;display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px 16px;flex-shrink:0;
+}
+.open-header h2{font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+
+#open-preroll{
+  width:100%;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:16px;padding:30px 16px;
+}
+#open-rolling{width:100%;display:none;flex-direction:column;gap:0}
+
+/* ─ REEL ─ */
+.reel-section{width:100%;position:relative;overflow:visible}
+.reel-container{
+  width:100%;height:158px;overflow:hidden;position:relative;
+  background:#050512;
+  border-top:2px solid rgba(255,255,255,.12);
+  border-bottom:2px solid rgba(255,255,255,.12);
+}
+/* fade edges */
+.reel-container::before,.reel-container::after{
+  content:'';position:absolute;top:0;height:100%;width:120px;z-index:5;pointer-events:none;
+}
+.reel-container::before{left:0;background:linear-gradient(to right,#050512,transparent)}
+.reel-container::after{right:0;background:linear-gradient(to left,#050512,transparent)}
+/* center line */
+.reel-marker{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:2px;height:100%;background:rgba(255,255,255,.9);z-index:10;pointer-events:none;
+  box-shadow:0 0 8px #fff;
+}
+.reel-marker::before{
+  content:'▼';position:absolute;top:-2px;left:50%;transform:translateX(-50%);
+  color:#fff;font-size:14px;line-height:1;
+}
+.reel-marker::after{
+  content:'▲';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
+  color:#fff;font-size:14px;line-height:1;
+}
+.reel-strip{
+  display:flex;align-items:center;height:100%;
+  will-change:transform;position:relative;
+}
+/* ─ REEL CARDS ─ */
+.rc{
+  flex-shrink:0;width:120px;height:140px;margin:0 5px;
+  border-radius:10px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:5px;
+  background:var(--surf2);border:2px solid rgba(255,255,255,.08);
+  position:relative;overflow:hidden;user-select:none;
+}
+.rc::before{
+  content:'';position:absolute;top:-40px;left:0;right:0;height:40px;
+  background:linear-gradient(to bottom,rgba(255,255,255,.06),transparent);
+}
+.rc .rc-emoji{font-size:2.6rem;line-height:1;pointer-events:none}
+.rc .rc-name{font-size:.58rem;font-weight:700;text-align:center;padding:0 4px;
+  line-height:1.2;color:rgba(255,255,255,.8);letter-spacing:.3px;pointer-events:none}
+.rc .rc-bar{position:absolute;bottom:0;left:0;right:0;height:3px}
+.rc[data-r="common"]{border-color:var(--c-common)}.rc[data-r="common"] .rc-bar{background:var(--c-common)}
+.rc[data-r="uncommon"]{border-color:var(--c-uncommon)}.rc[data-r="uncommon"] .rc-bar{background:var(--c-uncommon)}
+.rc[data-r="rare"]{border-color:var(--c-rare)}.rc[data-r="rare"] .rc-bar{background:var(--c-rare)}
+.rc[data-r="epic"]{border-color:var(--c-epic)}.rc[data-r="epic"] .rc-bar{background:var(--c-epic)}
+.rc[data-r="legendary"]{border-color:var(--c-legend);background:rgba(235,75,75,.06)}.rc[data-r="legendary"] .rc-bar{background:var(--c-legend)}
+.rc[data-r="ultra"]{border-color:var(--c-ultra);background:rgba(255,215,0,.08)}.rc[data-r="ultra"] .rc-bar{background:var(--c-ultra);box-shadow:0 0 8px var(--c-ultra)}
+
+/* ─ REVEAL OVERLAY ─ */
+#reveal-overlay{
+  position:absolute;inset:0;background:rgba(5,5,18,.92);
+  display:none;align-items:center;justify-content:center;
+  z-index:50;backdrop-filter:blur(6px);
+}
+#reveal-overlay.open{display:flex}
+.reveal-inner{
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:30px 24px;position:relative;text-align:center;max-width:320px;
+}
+.reveal-rays-wrap{
+  position:absolute;width:380px;height:380px;top:50%;left:50%;
+  transform:translate(-50%,-50%);pointer-events:none;
+}
+.reveal-rays{
+  width:100%;height:100%;border-radius:50%;
+  background:conic-gradient(
+    var(--rarity-color) 0deg,transparent 8deg,transparent 22deg,
+    var(--rarity-color) 30deg,transparent 38deg,transparent 52deg,
+    var(--rarity-color) 60deg,transparent 68deg,transparent 82deg,
+    var(--rarity-color) 90deg,transparent 98deg,transparent 112deg,
+    var(--rarity-color) 120deg,transparent 128deg,transparent 142deg,
+    var(--rarity-color) 150deg,transparent 158deg,transparent 172deg,
+    var(--rarity-color) 180deg,transparent 188deg,transparent 202deg,
+    var(--rarity-color) 210deg,transparent 218deg,transparent 232deg,
+    var(--rarity-color) 240deg,transparent 248deg,transparent 262deg,
+    var(--rarity-color) 270deg,transparent 278deg,transparent 292deg,
+    var(--rarity-color) 300deg,transparent 308deg,transparent 322deg,
+    var(--rarity-color) 330deg,transparent 338deg,transparent 352deg,
+    var(--rarity-color) 360deg
+  );
+  opacity:.18;animation:spin 10s linear infinite;
+}
+.reveal-glow{
+  position:absolute;width:220px;height:220px;top:50%;left:50%;
+  transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,var(--rarity-color) 0%,transparent 70%);
+  opacity:.25;animation:pulse-glow 1.5s ease-in-out infinite;pointer-events:none;
+}
+.reveal-emoji-big{
+  font-size:5rem;line-height:1;
+  filter:drop-shadow(0 0 20px var(--rarity-color));
+  animation:pop-in .5s cubic-bezier(.34,1.56,.64,1) forwards;
+  z-index:2;position:relative;
+}
+.reveal-name{font-size:1.1rem;font-weight:900;color:#fff;z-index:2;position:relative;letter-spacing:.5px}
+.reveal-rarity-badge{
+  padding:4px 16px;border-radius:20px;font-size:.7rem;font-weight:800;letter-spacing:3px;
+  border:2px solid var(--rarity-color);color:var(--rarity-color);
+  z-index:2;position:relative;text-transform:uppercase;
+  background:rgba(0,0,0,.5);
+}
+.reveal-value{color:var(--muted);font-size:.78rem;z-index:2;position:relative}
+.reveal-brand{
+  font-size:.7rem;color:var(--muted);z-index:2;position:relative;
+  background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:6px;padding:4px 10px;
+}
+.reveal-brand span{color:var(--accent);font-weight:700}
+
+/* ──────────────── INVENTORY ──────────────── */
+#s-inv{gap:16px}
+.inv-header{width:100%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.inv-header h2{font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.inv-stats-row{font-size:.78rem;color:var(--muted)}
+.inv-grid{
+  width:100%;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(100px,1fr));
+  gap:10px;max-width:600px;
+}
+.inv-card{
+  background:var(--surf2);border-radius:10px;padding:12px 6px 10px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  border:2px solid rgba(255,255,255,.08);cursor:pointer;
+  transition:transform .15s,border-color .15s,box-shadow .15s;
+  position:relative;overflow:hidden;
+}
+.inv-card:hover{transform:translateY(-4px)}
+.inv-card[data-r="common"]{border-color:rgba(158,163,172,.35)}
+.inv-card[data-r="common"]:hover{border-color:var(--c-common);box-shadow:0 4px 15px rgba(158,163,172,.3)}
+.inv-card[data-r="uncommon"]{border-color:rgba(94,152,217,.35)}
+.inv-card[data-r="uncommon"]:hover{border-color:var(--c-uncommon);box-shadow:0 4px 15px rgba(94,152,217,.3)}
+.inv-card[data-r="rare"]{border-color:rgba(136,71,255,.4)}
+.inv-card[data-r="rare"]:hover{border-color:var(--c-rare);box-shadow:0 4px 20px rgba(136,71,255,.4)}
+.inv-card[data-r="epic"]{border-color:rgba(209,78,255,.4)}
+.inv-card[data-r="epic"]:hover{border-color:var(--c-epic);box-shadow:0 4px 20px rgba(209,78,255,.4)}
+.inv-card[data-r="legendary"]{border-color:rgba(235,75,75,.4)}
+.inv-card[data-r="legendary"]:hover{border-color:var(--c-legend);box-shadow:0 4px 20px rgba(235,75,75,.4)}
+.inv-card[data-r="ultra"]{border-color:rgba(255,215,0,.5);background:rgba(255,215,0,.06)}
+.inv-card[data-r="ultra"]:hover{border-color:var(--c-ultra);box-shadow:0 4px 25px rgba(255,215,0,.5)}
+.inv-emoji{font-size:2.2rem;line-height:1}
+.inv-name{font-size:.6rem;font-weight:700;text-align:center;line-height:1.3;color:rgba(255,255,255,.8)}
+.inv-rarity-dot{width:8px;height:8px;border-radius:50%}
+.inv-brand{font-size:.52rem;color:var(--muted);text-align:center;opacity:.7}
+.inv-scrap-btn{
+  position:absolute;top:4px;right:4px;background:rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.1);color:var(--muted);
+  border-radius:4px;font-size:.6rem;padding:2px 5px;cursor:pointer;
+  opacity:0;transition:opacity .2s;
+}
+.inv-card:hover .inv-scrap-btn{opacity:1}
+.inv-scrap-btn:hover{color:#ff6060;border-color:#602020}
+.inv-empty{
+  grid-column:1/-1;text-align:center;padding:40px 20px;
+  color:var(--muted);font-size:.9rem;
+}
+.inv-empty-icon{font-size:3rem;margin-bottom:10px}
+.common-scrap-bar{
+  width:100%;max-width:600px;background:var(--surf);border:1px solid var(--border);
+  border-radius:10px;padding:12px 16px;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;font-size:.8rem;
+}
+.common-scrap-bar b{color:var(--c-common)}
+
+/* ──────────────── STATS ──────────────── */
+#s-stats{gap:16px}
+.stats-header{width:100%;display:flex;align-items:center;gap:12px}
+.stats-grid{width:100%;max-width:480px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat-card{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.stat-val{font-size:1.8rem;font-weight:900;color:var(--accent)}
+.stat-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.drop-rates{width:100%;max-width:480px;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:16px}
+.drop-rates h3{font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.rate-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.rate-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.rate-name{flex:1;font-size:.82rem;font-weight:600}
+.rate-pct{font-size:.8rem;color:var(--muted);font-weight:700;margin-left:auto}
+.rate-bar-wrap{width:100px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.rate-bar-fill{height:100%;border-radius:3px}
+.ad-timer-table{width:100%;max-width:480px;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:16px}
+.ad-timer-table h3{font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.adt-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.adt-row:last-child{border-bottom:none}
+.adt-dot{width:10px;height:10px;border-radius:50%}
+.adt-rarity{flex:1;font-size:.82rem;font-weight:600}
+.adt-time{font-weight:700;font-size:.85rem}
+.adt-active{
+  background:rgba(255,215,0,.08);border-radius:6px;padding:2px 6px;
+  color:var(--gold);border:1px solid rgba(255,215,0,.3);
+}
+
+/* ──────────────── DAILY MODAL ──────────────── */
+#daily-modal{
+  position:fixed;inset:0;background:rgba(5,5,18,.85);
+  display:none;align-items:center;justify-content:center;z-index:800;
+  backdrop-filter:blur(8px);
+}
+#daily-modal.open{display:flex}
+.daily-inner{
+  background:var(--surf);border:1px solid rgba(255,215,0,.3);
+  border-radius:16px;padding:32px 28px;text-align:center;
+  max-width:340px;width:90%;
+  box-shadow:0 0 60px rgba(255,215,0,.2);
+  animation:pop-in .4s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+.daily-icon{font-size:3.5rem;margin-bottom:8px}
+.daily-title{font-size:1.3rem;font-weight:900;color:var(--gold);margin-bottom:6px}
+.daily-streak{font-size:.85rem;color:var(--muted);margin-bottom:16px}
+.daily-reward{
+  font-size:2rem;font-weight:900;color:var(--accent);
+  margin:12px 0;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+
+/* ──────────────── ANIMATIONS ──────────────── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse-glow{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.25}50%{transform:translate(-50%,-50%) scale(1.15);opacity:.4}}
+@keyframes pop-in{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translate(0,0)}15%{transform:translate(-9px,4px)}30%{transform:translate(9px,-4px)}45%{transform:translate(-7px,3px)}60%{transform:translate(7px,-3px)}75%{transform:translate(-4px,2px)}90%{transform:translate(4px,-2px)}}
+@keyframes flash-out{0%{opacity:.85}100%{opacity:0}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes winner-shine{0%,100%{box-shadow:0 0 0 2px var(--rarity-color)}50%{box-shadow:0 0 25px 6px var(--rarity-color)}}
+.shake{animation:shake .6s ease!important}
+.float{animation:float 3s ease-in-out infinite}
+#winner-highlight{animation:winner-shine 1s ease-in-out infinite}
+
+/* ──────────────── MISC UI ──────────────── */
+.screen-title{font-size:1rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.divider{width:100%;max-width:480px;height:1px;background:var(--border);margin:4px 0}
+.toast{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%);
+  background:rgba(30,30,60,.95);border:1px solid var(--border);
+  border-radius:10px;padding:10px 20px;font-size:.85rem;font-weight:600;
+  z-index:950;animation:toast-in .3s ease;white-space:nowrap;
+  pointer-events:none;
+}
+@keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.text-gold{color:var(--gold)}
+.text-muted{color:var(--muted)}
+.mt-8{margin-top:8px}
+.rarity-pill{
+  display:inline-block;padding:2px 8px;border-radius:10px;font-size:.65rem;
+  font-weight:800;letter-spacing:2px;text-transform:uppercase;border:1px solid currentColor;
+}
+/* responsive */
+@media(max-width:400px){
+  .inv-grid{grid-template-columns:repeat(auto-fill,minmax(85px,1fr));gap:8px}
+  .case-body{width:140px;height:140px}.case-icon{font-size:50px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="ptcl"></canvas>
+
+<div id="app">
+
+  <!-- ── DAILY BONUS MODAL ── -->
+  <div id="daily-modal">
+    <div class="daily-inner">
+      <div class="daily-icon">🎁</div>
+      <div class="daily-title">DAILY BONUS!</div>
+      <div id="daily-streak" class="daily-streak"></div>
+      <div id="daily-reward" class="daily-reward"></div>
+      <div class="text-muted mt-8" style="font-size:.78rem">Come back tomorrow for a bigger bonus!</div>
+      <button class="btn btn-primary mt-8" style="margin-top:16px" onclick="closeDailyModal()">CLAIM & PLAY</button>
+    </div>
+  </div>
+
+  <!-- ── HEADER ── -->
+  <header id="hdr">
+    <div class="logo">🎰 AdDrop</div>
+    <div class="keys-badge"><span class="ki">🗝️</span><span id="keys-count">0</span></div>
+  </header>
+
+  <!-- ═══════════════════ HOME SCREEN ═══════════════════ -->
+  <div id="s-home" class="screen active">
+    <div class="home-hero">
+      <div class="case-wrap float" onclick="goTo('s-open')">
+        <div class="case-body">
+          <span class="case-icon">⭐</span>
+          <span class="case-label">DROP CASE</span>
+        </div>
+      </div>
+      <div class="home-keys-info">
+        <h3>Watch ads · Earn keys · Open cases</h3>
+        <div id="home-timer-badge" class="ad-timer-badge">⏱ Ad duration: 30s</div>
+      </div>
+    </div>
+    <div class="home-actions">
+      <button class="btn btn-primary" onclick="goTo('s-ad')">
+        📺 WATCH AD &nbsp;<span class="sub-label" id="home-ad-sec">30s</span>
+      </button>
+      <button class="btn btn-open" id="btn-open-home" onclick="goTo('s-open')">
+        🎲 OPEN CASE &nbsp;<span class="sub-label">1 🗝️</span>
+      </button>
+      <button class="btn btn-secondary" onclick="goTo('s-inv')">🎒 INVENTORY</button>
+      <button class="btn btn-secondary" onclick="goTo('s-stats')">📊 STATS &amp; DROP RATES</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ AD SCREEN ═══════════════════ -->
+  <div id="s-ad" class="screen">
+    <div class="ad-screen-inner">
+      <div style="width:100%;display:flex;align-items:center;gap:12px">
+        <button class="btn-back" onclick="goTo('s-home')">← Back</button>
+        <span class="screen-title">Watch Ad → Earn Key</span>
+      </div>
+
+      <!-- Ad container — real ad loads here when configured -->
+      <div class="ad-box" id="ad-box">
+        <div class="ad-demo-tag" id="ad-network-tag">[DEMO AD]</div>
+        <div class="ad-brand" id="ad-brand-name">EXAMPLE CO</div>
+        <div class="ad-tagline" id="ad-tagline">Your ad could appear here</div>
+        <!-- Real ad unit injected by JS if configured -->
+        <div id="ad-unit-slot"></div>
+      </div>
+
+      <!-- Countdown ring -->
+      <div class="ad-timer-ring">
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="45"/>
+          <circle class="ring-fg" id="ring-fg" cx="50" cy="50" r="45"/>
+        </svg>
+        <div class="ad-secs" id="ad-secs">30</div>
+      </div>
+
+      <div class="ad-earning-info">Watching earns you <b>1 🗝️ Key</b></div>
+
+      <div class="ad-rarity-tip" id="ad-rarity-tip">
+        🔥 Pull rarer items to shorten your ads!
+      </div>
+
+      <button class="btn btn-primary" id="btn-skip" onclick="skipAd()" style="display:none">
+        ⚡ SKIP (debug)
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ OPENING SCREEN ═══════════════════ -->
+  <div id="s-open" class="screen" style="padding:0">
+    <div class="open-header">
+      <button class="btn-back" onclick="goHome()">← Back</button>
+      <span class="screen-title">Drop Case</span>
+      <div class="keys-badge" style="font-size:.85rem">🗝️ <span id="open-keys">0</span></div>
+    </div>
+
+    <!-- Pre-roll -->
+    <div id="open-preroll" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px 16px;width:100%">
+      <div class="case-wrap" id="open-case-btn" onclick="startOpening()">
+        <div class="case-body" style="width:200px;height:200px">
+          <span class="case-icon" style="font-size:78px">⭐</span>
+          <span class="case-label">CLICK TO OPEN</span>
+        </div>
+      </div>
+      <div id="open-no-keys" class="text-muted" style="text-align:center;font-size:.85rem;display:none">
+        You need a key to open a case.<br>Watch an ad to earn one!
+      </div>
+      <button class="btn btn-primary" style="max-width:220px;display:none" id="open-watch-btn" onclick="goTo('s-ad')">
+        📺 Watch Ad First
+      </button>
+    </div>
+
+    <!-- Rolling area (shown during spin) -->
+    <div id="open-rolling" style="display:none;flex-direction:column;width:100%;gap:16px;padding:20px 0">
+      <div class="reel-section">
+        <div class="reel-container">
+          <div class="reel-marker"></div>
+          <div id="reel-strip" class="reel-strip"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reveal overlay (inside opening screen) -->
+    <div id="reveal-overlay">
+      <div class="reveal-inner">
+        <div class="reveal-rays-wrap">
+          <div class="reveal-rays" id="reveal-rays"></div>
+          <div class="reveal-glow" id="reveal-glow"></div>
+        </div>
+        <div class="reveal-emoji-big" id="rev-emoji"></div>
+        <div class="reveal-name" id="rev-name"></div>
+        <div class="reveal-rarity-badge" id="rev-rarity"></div>
+        <div class="reveal-value" id="rev-value"></div>
+        <div class="reveal-brand" id="rev-brand"></div>
+        <button class="btn btn-primary mt-8" onclick="collectItem()" style="max-width:240px;margin-top:8px">
+          ✅ ADD TO INVENTORY
+        </button>
+        <button class="btn btn-secondary" onclick="openAgain()" style="max-width:240px">
+          🔁 OPEN AGAIN (1 🗝️)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ INVENTORY SCREEN ═══════════════════ -->
+  <div id="s-inv" class="screen">
+    <div class="inv-header">
+      <div>
+        <div class="screen-title">INVENTORY</div>
+        <div class="inv-stats-row" id="inv-stats-row"></div>
+      </div>
+      <button class="btn-back" onclick="goTo('s-home')">← Home</button>
+    </div>
+    <div id="common-scrap-bar" class="common-scrap-bar" style="display:none">
+      <span>🗑️ Common items: <b id="common-count">0</b> &nbsp;(5 = 1 🗝️)</span>
+      <button class="btn btn-sm btn-secondary" onclick="scrapAllCommons()">Bulk Scrap</button>
+    </div>
+    <div class="inv-grid" id="inv-grid"></div>
+  </div>
+
+  <!-- ═══════════════════ STATS SCREEN ═══════════════════ -->
+  <div id="s-stats" class="screen">
+    <div class="stats-header">
+      <button class="btn-back" onclick="goTo('s-home')">← Home</button>
+      <span class="screen-title">STATS</span>
+    </div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="divider"></div>
+    <div class="drop-rates">
+      <h3>Drop Rates</h3>
+      <div id="drop-rate-rows"></div>
+    </div>
+    <div class="ad-timer-table">
+      <h3>⚡ Ad Duration by Rarity</h3>
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:10px">
+        Pull rarer items → shorter ads for life!
+      </div>
+      <div id="adt-rows"></div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   ░░░░░░░░░  AD NETWORK CONFIGURATION — JAVASCRIPT  ░░░░░░░░░░░░░░
+   ═══════════════════════════════════════════════════════════════════
+   After pasting your ad script in the <head>, edit the values below:
+   ─────────────────────────────────────────────────────────────────── */
+const CONFIG = {
+  AD_NETWORK_CONFIGURED : false,       // ← set true after adding your script
+  AD_PROVIDER           : 'demo',      // 'adsense' | 'adsterra' | 'demo'
+  ADSENSE_CLIENT        : 'ca-pub-XXXXXXXXXXXXXXXXXX',
+  ADSENSE_SLOT          : 'XXXXXXXXXX',
+
+  /* ── RARITY-SCALED AD TIMER ──────────────────────────────────────
+     The rarest item in your inventory determines how long you watch ads.
+     Pull epic items → only 15 seconds. Pull ultra-rare → only 5 seconds!
+     ─────────────────────────────────────────────────────────────── */
+  AD_DURATION: {
+    none      : 30,   // No items yet       → 30s  ⬛
+    common    : 30,   // Common in inv      → 30s  🔘
+    uncommon  : 25,   // Uncommon in inv    → 25s  🔵
+    rare      : 20,   // Rare in inv        → 20s  🟣
+    epic      : 15,   // Epic in inv        → 15s  🩷
+    legendary : 10,   // Legendary in inv   → 10s  🔴
+    ultra     :  5,   // Ultra Rare in inv  →  5s ⭐ (max perk!)
+  },
+
+  KEYS_PER_AD        : 1,
+  CASE_COST          : 1,
+  DAILY_BONUS_KEYS   : 2,
+  STREAK_BONUS_MAX   : 5,   // max extra keys from streak
+  COMMONS_FOR_KEY    : 5,   // how many commons scrap into 1 key
+};
+/* ═══════════════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────────────────
+   ITEMS DATABASE
+   ───────────────────────────────────────────────────────────────── */
+const RARITY = {
+  common    : { label:'Common',    color:'#9ea3ac', weight:40, scrap:0  },
+  uncommon  : { label:'Uncommon',  color:'#5e98d9', weight:30, scrap:1  },
+  rare      : { label:'Rare',      color:'#8847ff', weight:15, scrap:2  },
+  epic      : { label:'Epic',      color:'#d14eff', weight:10, scrap:5  },
+  legendary : { label:'Legendary', color:'#eb4b4b', weight:4,  scrap:15 },
+  ultra     : { label:'Ultra Rare',color:'#ffd700', weight:1,  scrap:50 },
+};
+const RARITY_ORDER = ['common','uncommon','rare','epic','legendary','ultra'];
+
+const ITEMS = [
+  // ── Common (grey)  40% ──────────────────────────────────────────
+  {id:'c1',name:'Field Knife',       emoji:'🗡️',  rarity:'common'},
+  {id:'c2',name:'Rusty Pistol',      emoji:'🔫',  rarity:'common'},
+  {id:'c3',name:'Iron Shield',       emoji:'🛡️',  rarity:'common'},
+  {id:'c4',name:'Dog Tags',          emoji:'🎖️',  rarity:'common'},
+  {id:'c5',name:'Worn Boots',        emoji:'🥾',  rarity:'common'},
+  // ── Uncommon (blue) 30% ─────────────────────────────────────────
+  {id:'u1',name:'Combat Knife',      emoji:'⚔️',  rarity:'uncommon'},
+  {id:'u2',name:'Service Pistol',    emoji:'🔫',  rarity:'uncommon'},
+  {id:'u3',name:'Tac Shield',        emoji:'🛡️',  rarity:'uncommon'},
+  {id:'u4',name:'Field Radio',       emoji:'📡',  rarity:'uncommon'},
+  // ── Rare (purple)  15% ──────────────────────────────────────────
+  {id:'r1',name:'Karambit | Forest', emoji:'🔪',  rarity:'rare'},
+  {id:'r2',name:'Deagle | Oxide',    emoji:'🔫',  rarity:'rare'},
+  {id:'r3',name:'Shadow Daggers',    emoji:'🗡️',  rarity:'rare'},
+  {id:'r4',name:'Operator Gloves',   emoji:'🧤',  rarity:'rare'},
+  // ── Epic (pink)    10% ──────────────────────────────────────────
+  {id:'e1',name:'Butterfly | Fade',  emoji:'🦋',  rarity:'epic'},
+  {id:'e2',name:'Deagle | Blaze',    emoji:'🔥',  rarity:'epic'},
+  {id:'e3',name:'Specialist Gloves', emoji:'🧤',  rarity:'epic'},
+  // ── Legendary (red) 4% ──────────────────────────────────────────
+  {id:'l1',name:'AK-47 | Redline',   emoji:'💥',  rarity:'legendary'},
+  {id:'l2',name:'M4A4 | Howl',       emoji:'🐺',  rarity:'legendary'},
+  {id:'l3',name:'King Snake Gloves', emoji:'🐍',  rarity:'legendary'},
+  // ── Ultra Rare (gold) 1% ────────────────────────────────────────
+  {id:'ur1',name:'★ Karambit | Crimson Web',emoji:'⭐',rarity:'ultra'},
+  {id:'ur2',name:'★ Bayonet | Sapphire',    emoji:'💎',rarity:'ultra'},
+  {id:'ur3',name:'★ M9 | Emerald',          emoji:'💚',rarity:'ultra'},
+];
+
+const DEMO_BRANDS = ['ExampleCo™','TechNova','ShopZone','ClickHere Inc.','GameFuel','PixelPulse'];
+
+/* ─────────────────────────────────────────────────────────────────
+   STATE & PERSISTENCE
+   ───────────────────────────────────────────────────────────────── */
+const SAVE_KEY = 'addrop_v1';
+let state;
+
+function defaultState() {
+  return {
+    keys      : 3,   // start with 3 keys so new player can try immediately
+    inventory : [],
+    nextUid   : 1,
+    stats     : { casesOpened:0, adsWatched:0, bestRarity:null, itemsScrapped:0 },
+    daily     : { lastLogin:null, streak:0 },
+  };
+}
+
+function saveState() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch(e){}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (raw) { state = { ...defaultState(), ...JSON.parse(raw) }; return; }
+  } catch(e){}
+  state = defaultState();
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RARITY HELPERS
+   ───────────────────────────────────────────────────────────────── */
+function rarityColor(r){ return RARITY[r]?.color || '#fff'; }
+function rarityLabel(r){ return RARITY[r]?.label || r; }
+
+function getBestRarity() {
+  let best = -1;
+  for (const item of state.inventory) {
+    const idx = RARITY_ORDER.indexOf(item.rarity);
+    if (idx > best) best = idx;
+  }
+  return best >= 0 ? RARITY_ORDER[best] : 'none';
+}
+
+function getAdDuration() {
+  return CONFIG.AD_DURATION[getBestRarity()] ?? 30;
+}
+
+function weightedRandom() {
+  const total = Object.values(RARITY).reduce((s,r) => s + r.weight, 0);
+  let r = Math.random() * total;
+  for (const [key, val] of Object.entries(RARITY)) {
+    r -= val.weight;
+    if (r <= 0) return key;
+  }
+  return 'common';
+}
+
+function pickItem(rarity) {
+  const pool = ITEMS.filter(i => i.rarity === rarity);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function rollWinner() {
+  return pickItem(weightedRandom());
+}
+
+function reelItem() {
+  // Weighted for reel visuals — slightly more colorful than real odds
+  const r = Math.random();
+  if (r < 0.35) return pickItem('common');
+  if (r < 0.62) return pickItem('uncommon');
+  if (r < 0.82) return pickItem('rare');
+  if (r < 0.95) return pickItem('epic');
+  if (r < 0.995) return pickItem('legendary');
+  return pickItem('ultra');
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   WEB AUDIO ENGINE
+   ───────────────────────────────────────────────────────────────── */
+const Audio = (() => {
+  let ctx = null;
+  function ac() {
+    if (!ctx) {
+      try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+    }
+    if (ctx && ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+  function tone({ freq=440, dur=0.06, vol=0.35, type='sine', ramp=true, delay=0 }) {
+    const c = ac(); if (!c) return;
+    const osc = c.createOscillator();
+    const g   = c.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    const t0 = c.currentTime + delay;
+    g.gain.setValueAtTime(0.001, t0);
+    g.gain.linearRampToValueAtTime(vol, t0 + 0.005);
+    if (ramp) g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    osc.connect(g); g.connect(c.destination);
+    osc.start(t0); osc.stop(t0 + dur + 0.01);
+  }
+
+  const RARITY_FREQ = { common:580, uncommon:680, rare:820, epic:960, legendary:1100, ultra:1400 };
+
+  return {
+    tick(rarity='common', speed=1) {
+      const base = RARITY_FREQ[rarity] || 580;
+      const jitter = 0.85 + Math.random() * 0.3;
+      tone({ freq: base * jitter, dur: 0.04, vol: Math.min(0.5, 0.18 + speed * 0.08), type:'square' });
+    },
+    caseClick() {
+      tone({ freq:220, dur:0.09, vol:0.5, type:'sawtooth' });
+      tone({ freq:340, dur:0.07, vol:0.4, type:'sawtooth', delay:0.06 });
+    },
+    reveal(rarity) {
+      const p = { common:1, uncommon:1.2, rare:1.6, epic:2.0, legendary:2.6, ultra:3.4 }[rarity] || 1;
+      const c = ac(); if (!c) return;
+      const osc = c.createOscillator(); const g = c.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(260*p, c.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880*p, c.currentTime + 0.55);
+      g.gain.setValueAtTime(0.001, c.currentTime);
+      g.gain.linearRampToValueAtTime(0.55, c.currentTime + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.9);
+      osc.connect(g); g.connect(c.destination);
+      osc.start(); osc.stop(c.currentTime + 0.95);
+    },
+    ding(keys=1) {
+      const notes=[392,494,587];
+      notes.slice(0, Math.min(keys,3)).forEach((f,i)=>{
+        tone({ freq:f, dur:0.18, vol:0.4, delay:i*0.12 });
+      });
+    },
+    button() { tone({ freq:440, dur:0.04, vol:0.18, type:'square' }); },
+    scrap()  {
+      tone({ freq:700, dur:0.04, vol:0.3, type:'sawtooth' });
+      tone({ freq:500, dur:0.06, vol:0.2, delay:0.05 });
+    },
+    daily()  {
+      [262,330,392,523].forEach((f,i) => tone({ freq:f, dur:0.14, vol:0.38, delay:i*0.11 }));
+    },
+  };
+})();
+
+/* ─────────────────────────────────────────────────────────────────
+   PARTICLE SYSTEM
+   ───────────────────────────────────────────────────────────────── */
+const Particles = (() => {
+  const canvas = document.getElementById('ptcl');
+  const ctx2   = canvas.getContext('2d');
+  let pts = [], rafId = null;
+
+  function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+  window.addEventListener('resize', resize); resize();
+
+  function burst(x, y, color, n=60) {
+    for (let i=0; i<n; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 4 + Math.random() * 12;
+      pts.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 4,
+        color: i % 3 === 0 ? '#fff' : color,
+        s: 3 + Math.random() * 7,
+        life: 1,
+        decay: 0.013 + Math.random() * 0.018,
+        rot: Math.random() * 6.28,
+        rspd: (Math.random() - 0.5) * 0.25,
+      });
+    }
+    if (!rafId) loop();
+  }
+
+  function loop() {
+    ctx2.clearRect(0, 0, canvas.width, canvas.height);
+    pts = pts.filter(p => p.life > 0.01);
+    for (const p of pts) {
+      p.x  += p.vx; p.y += p.vy;
+      p.vy += 0.45; p.vx *= 0.97;
+      p.life -= p.decay; p.rot += p.rspd;
+      ctx2.save();
+      ctx2.translate(p.x, p.y); ctx2.rotate(p.rot);
+      ctx2.globalAlpha = p.life;
+      ctx2.fillStyle = p.color;
+      ctx2.fillRect(-p.s/2, -p.s/2, p.s, p.s);
+      ctx2.restore();
+    }
+    rafId = pts.length > 0 ? requestAnimationFrame(loop) : null;
+  }
+
+  return { burst };
+})();
+
+/* ─────────────────────────────────────────────────────────────────
+   SCREEN FLASH & SHAKE
+   ───────────────────────────────────────────────────────────────── */
+function flashScreen(color='#ffd700') {
+  const el = document.createElement('div');
+  el.style.cssText = `position:fixed;inset:0;background:${color};opacity:.8;
+    z-index:950;pointer-events:none;animation:flash-out .55s ease forwards`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 600);
+}
+
+function shakeApp() {
+  const app = document.getElementById('app');
+  app.classList.add('shake');
+  setTimeout(() => app.classList.remove('shake'), 650);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   TOAST
+   ───────────────────────────────────────────────────────────────── */
+let toastTimer;
+function showToast(msg, duration=2200) {
+  clearTimeout(toastTimer);
+  let t = document.querySelector('.toast');
+  if (!t) { t = document.createElement('div'); t.className='toast'; document.body.appendChild(t); }
+  t.innerHTML = msg; t.style.opacity='1';
+  toastTimer = setTimeout(() => { if(t) t.style.opacity='0'; }, duration);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   DAILY BONUS
+   ───────────────────────────────────────────────────────────────── */
+function checkDailyBonus() {
+  const today = new Date().toDateString();
+  const last  = state.daily.lastLogin;
+  if (last === today) return; // already claimed
+
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  if (last === yesterday) {
+    state.daily.streak = Math.min((state.daily.streak || 0) + 1, 30);
+  } else {
+    state.daily.streak = 1;
+  }
+  state.daily.lastLogin = today;
+
+  const streakBonus = Math.min(state.daily.streak - 1, CONFIG.STREAK_BONUS_MAX);
+  const keys = CONFIG.DAILY_BONUS_KEYS + streakBonus;
+  state.keys += keys;
+  saveState();
+
+  const streakEl  = document.getElementById('daily-streak');
+  const rewardEl  = document.getElementById('daily-reward');
+  streakEl.textContent = state.daily.streak > 1
+    ? `🔥 Day ${state.daily.streak} Streak! +${streakBonus} bonus key${streakBonus!==1?'s':''}`
+    : 'Day 1 — Welcome back!';
+  rewardEl.innerHTML = `+${keys} <span>🗝️</span>`;
+
+  Audio.daily();
+  document.getElementById('daily-modal').classList.add('open');
+}
+
+function closeDailyModal() {
+  document.getElementById('daily-modal').classList.remove('open');
+  refreshUI();
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   AD / KEY SYSTEM
+   ───────────────────────────────────────────────────────────────── */
+let adTimer = null;
+let adSecsLeft = 30;
+let currentAdBrand = '';
+
+function watchAd() {
+  const dur = getAdDuration();
+  adSecsLeft = dur;
+  currentAdBrand = DEMO_BRANDS[Math.floor(Math.random() * DEMO_BRANDS.length)];
+
+  // Update ad box visuals
+  document.getElementById('ad-brand-name').textContent = currentAdBrand.toUpperCase().replace(/[™®]/g,'');
+  document.getElementById('ad-tagline').textContent    = 'Advertisement — watch to earn a key';
+  document.getElementById('ad-network-tag').textContent = CONFIG.AD_NETWORK_CONFIGURED
+    ? `[${CONFIG.AD_PROVIDER.toUpperCase()}]` : '[DEMO AD]';
+
+  // Rarity tip
+  const best = getBestRarity();
+  const tipEl = document.getElementById('ad-rarity-tip');
+  if (best === 'none' || best === 'common') {
+    tipEl.innerHTML = '🔥 Pull rarer items to shorten future ads — down to <b>5s</b>!';
+  } else if (best === 'ultra') {
+    tipEl.innerHTML = '⭐ Ultra Rare detected! Ad reduced to just <b>5s</b>!';
+  } else {
+    const next = RARITY_ORDER[RARITY_ORDER.indexOf(best) + 1];
+    const nextTime = CONFIG.AD_DURATION[next];
+    tipEl.innerHTML = `⚡ <b>${rarityLabel(best)}</b> perk active! Pull <b>${rarityLabel(next)}</b> to cut ads to ${nextTime}s!`;
+  }
+
+  // Ring setup
+  const ring = document.getElementById('ring-fg');
+  const circumference = 283; // 2π × 45
+  ring.style.strokeDasharray  = circumference;
+  ring.style.strokeDashoffset = 0;
+  ring.style.transition = 'none';
+  document.getElementById('ad-secs').textContent = adSecsLeft;
+
+  // Start countdown
+  clearInterval(adTimer);
+  adTimer = setInterval(() => {
+    adSecsLeft--;
+    document.getElementById('ad-secs').textContent = adSecsLeft;
+    const progress = (dur - adSecsLeft) / dur;
+    ring.style.transition = 'stroke-dashoffset 0.9s linear';
+    ring.style.strokeDashoffset = circumference * progress;
+
+    if (adSecsLeft <= 0) {
+      clearInterval(adTimer);
+      onAdComplete();
+    }
+  }, 1000);
+
+  /* ── REAL AD INTEGRATION HOOK ──────────────────────────────────
+     If AD_NETWORK_CONFIGURED is true, call your ad SDK here.
+     The SDK's reward callback should call onAdComplete().
+     Example (AdSense rewarded):
+       window.adsbygoogle = window.adsbygoogle || [];
+       adsbygoogle.push({ googletag.pubads().addEventListener('rewardedSlotGranted', onAdComplete) });
+     The demo countdown still runs as fallback UI.
+     ─────────────────────────────────────────────────────────────── */
+}
+
+function onAdComplete() {
+  clearInterval(adTimer);
+  const keys = CONFIG.KEYS_PER_AD;
+  state.keys += keys;
+  state.stats.adsWatched++;
+  saveState();
+  Audio.ding(keys);
+  showToast(`🗝️ +${keys} Key earned!`);
+  setTimeout(() => goTo('s-home'), 800);
+  refreshUI();
+}
+
+function skipAd() { clearInterval(adTimer); onAdComplete(); } // debug only
+
+/* ─────────────────────────────────────────────────────────────────
+   CASE OPENING
+   ───────────────────────────────────────────────────────────────── */
+const CARD_W    = 120;
+const CARD_GAP  = 10;
+const CARD_STEP = CARD_W + CARD_GAP;  // 130
+const NUM_CARDS = 62;
+const WIN_IDX   = 48;
+
+let pendingItem = null;   // item awarded but not yet collected
+
+function generateReel(winner) {
+  const cards = [];
+  for (let i = 0; i < NUM_CARDS; i++) {
+    cards.push(i === WIN_IDX ? winner : reelItem());
+  }
+  return cards;
+}
+
+function buildReelDOM(cards) {
+  const strip = document.getElementById('reel-strip');
+  strip.innerHTML = '';
+  strip.style.transform = '';
+  cards.forEach((item, i) => {
+    const div = document.createElement('div');
+    div.className = 'rc';
+    div.dataset.r  = item.rarity;
+    div.dataset.idx = i;
+    div.innerHTML = `
+      <span class="rc-emoji">${item.emoji}</span>
+      <span class="rc-name">${item.name}</span>
+      <div class="rc-bar"></div>`;
+    strip.appendChild(div);
+  });
+  return strip;
+}
+
+function goHome() {
+  clearInterval(adTimer);
+  document.getElementById('reveal-overlay').classList.remove('open');
+  document.getElementById('open-preroll').style.display  = 'flex';
+  document.getElementById('open-rolling').style.display  = 'none';
+  goTo('s-home');
+}
+
+function startOpening() {
+  if (state.keys < CONFIG.CASE_COST) {
+    document.getElementById('open-no-keys').style.display    = 'block';
+    document.getElementById('open-watch-btn').style.display  = 'block';
+    Audio.button();
+    return;
+  }
+  state.keys -= CONFIG.CASE_COST;
+  state.stats.casesOpened++;
+  saveState();
+  refreshUI();
+
+  Audio.caseClick();
+
+  const winner = rollWinner();
+  pendingItem  = winner;
+
+  // Update best stat
+  if (!state.stats.bestRarity ||
+      RARITY_ORDER.indexOf(winner.rarity) > RARITY_ORDER.indexOf(state.stats.bestRarity)) {
+    state.stats.bestRarity = winner.rarity;
+    saveState();
+  }
+
+  const cards = generateReel(winner);
+  const strip  = buildReelDOM(cards);
+
+  // Switch views
+  document.getElementById('open-preroll').style.display  = 'none';
+  document.getElementById('open-rolling').style.display  = 'flex';
+  document.getElementById('reveal-overlay').classList.remove('open');
+
+  // Start spin after brief pause
+  setTimeout(() => animateReel(strip, winner), 180);
+}
+
+function animateReel(strip, winner) {
+  const container = document.querySelector('.reel-container');
+  const cw        = container.offsetWidth;
+  const center    = cw / 2;
+
+  const START_IDX = 3;
+  const startX    = center - START_IDX * CARD_STEP - CARD_W / 2;
+  const endX      = center - WIN_IDX   * CARD_STEP - CARD_W / 2;
+
+  strip.style.transform = `translateX(${startX}px)`;
+
+  const DURATION = 7200; // ms
+  let startTime  = null;
+  let lastCard   = START_IDX;
+
+  // quintic ease-out — dramatic deceleration like CS:GO
+  const easeOut = t => 1 - Math.pow(1 - t, 5);
+
+  function frame(now) {
+    if (!startTime) startTime = now;
+    const elapsed = Math.min(now - startTime, DURATION);
+    const t       = elapsed / DURATION;
+    const eased   = easeOut(t);
+    const curX    = startX + (endX - startX) * eased;
+
+    strip.style.transform = `translateX(${curX}px)`;
+
+    // Tick when card under marker changes
+    const curCard = Math.round((center - curX - CARD_W / 2) / CARD_STEP);
+    if (curCard !== lastCard && curCard >= 0 && curCard < NUM_CARDS) {
+      const speed = Math.abs((1 - eased) * (endX - startX) / CARD_STEP / 7.2); // approx cards/s
+      const r     = strip.children[curCard]?.dataset?.r || 'common';
+      Audio.tick(r, Math.min(speed / 4, 1));
+      lastCard = curCard;
+    }
+
+    if (elapsed < DURATION) {
+      requestAnimationFrame(frame);
+    } else {
+      // Snap to exact position
+      strip.style.transform = `translateX(${endX}px)`;
+      // tiny spring bounce
+      strip.style.transition = 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1)';
+      strip.style.transform  = `translateX(${endX}px)`;
+      setTimeout(() => { strip.style.transition = ''; }, 350);
+      setTimeout(() => revealWinner(winner), 600);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function revealWinner(item) {
+  const col = rarityColor(item.rarity);
+
+  // Glow winner card
+  const strip = document.getElementById('reel-strip');
+  Array.from(strip.children).forEach((c, i) => {
+    c.style.opacity = (i === WIN_IDX) ? '1' : '0.2';
+  });
+
+  // Particles
+  const amounts = { common:25, uncommon:40, rare:65, epic:85, legendary:120, ultra:200 };
+  Particles.burst(innerWidth/2, innerHeight/2, col, amounts[item.rarity] || 40);
+
+  // Sound
+  Audio.reveal(item.rarity);
+
+  // Screen effects for high rarity
+  if      (item.rarity === 'ultra')     { flashScreen('#ffd70088'); shakeApp(); }
+  else if (item.rarity === 'legendary') { flashScreen('#eb4b4b55'); }
+  else if (item.rarity === 'epic')      { flashScreen('#d14eff44'); }
+
+  // Show overlay
+  setTimeout(() => {
+    const brand = currentAdBrand || DEMO_BRANDS[0];
+    const ov    = document.getElementById('reveal-overlay');
+    const rl    = document.getElementById('reveal-rays');
+    const gl    = document.getElementById('reveal-glow');
+    rl.style.setProperty('--rarity-color', col); // doesn't work directly but set style
+    rl.parentElement.style.cssText += `--rarity-color:${col}`;
+    gl.style.cssText += `--rarity-color:${col}`;
+    // set colors via CSS var on parent
+    document.querySelector('.reveal-inner').style.setProperty('--rarity-color', col);
+    ov.style.setProperty('--rarity-color', col);
+    // also set directly on elements that use it
+    rl.style.background = rl.style.background.replace('conic-gradient','x');
+    gl.style.background = `radial-gradient(circle,${col} 0%,transparent 70%)`;
+    rl.style.background = buildRaysGradient(col);
+
+    document.getElementById('rev-emoji').textContent = item.emoji;
+    document.getElementById('rev-name').textContent  = item.name;
+    document.getElementById('rev-rarity').textContent = rarityLabel(item.rarity);
+    document.getElementById('rev-rarity').style.cssText = `--rarity-color:${col};color:${col};border-color:${col}`;
+    document.getElementById('rev-value').textContent = `Scrap value: ${RARITY[item.rarity].scrap} 🗝️`;
+    document.getElementById('rev-brand').innerHTML = `Brought to you by <span>${brand}</span>`;
+
+    ov.classList.add('open');
+  }, 650);
+}
+
+function buildRaysGradient(c) {
+  const t = 'transparent';
+  return `conic-gradient(${c} 0deg,${t} 8deg,${t} 22deg,${c} 30deg,${t} 38deg,${t} 52deg,${c} 60deg,${t} 68deg,${t} 82deg,${c} 90deg,${t} 98deg,${t} 112deg,${c} 120deg,${t} 128deg,${t} 142deg,${c} 150deg,${t} 158deg,${t} 172deg,${c} 180deg,${t} 188deg,${t} 202deg,${c} 210deg,${t} 218deg,${t} 232deg,${c} 240deg,${t} 248deg,${t} 262deg,${c} 270deg,${t} 278deg,${t} 292deg,${c} 300deg,${t} 308deg,${t} 322deg,${c} 330deg,${t} 338deg,${t} 352deg,${c} 360deg)`;
+}
+
+function collectItem() {
+  if (!pendingItem) return;
+  const invItem = {
+    uid     : state.nextUid++,
+    itemId  : pendingItem.id,
+    name    : pendingItem.name,
+    emoji   : pendingItem.emoji,
+    rarity  : pendingItem.rarity,
+    brand   : currentAdBrand || 'ExampleCo™',
+    scrapVal: RARITY[pendingItem.rarity].scrap,
+    acquiredAt: Date.now(),
+  };
+  state.inventory.push(invItem);
+  pendingItem = null;
+  saveState();
+
+  document.getElementById('reveal-overlay').classList.remove('open');
+  document.getElementById('open-preroll').style.display = 'flex';
+  document.getElementById('open-rolling').style.display = 'none';
+  document.getElementById('open-no-keys').style.display = 'none';
+  document.getElementById('open-watch-btn').style.display = 'none';
+
+  showToast(`🎒 ${invItem.emoji} Added to inventory!`);
+  refreshUI();
+}
+
+function openAgain() {
+  document.getElementById('reveal-overlay').classList.remove('open');
+  document.getElementById('open-rolling').style.display  = 'none';
+  document.getElementById('open-preroll').style.display  = 'flex';
+  if (pendingItem) collectItem();   // auto-collect pending
+  setTimeout(() => startOpening(), 50);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SCRAPPING
+   ───────────────────────────────────────────────────────────────── */
+function scrapItem(uid) {
+  const idx  = state.inventory.findIndex(i => i.uid === uid);
+  if (idx < 0) return;
+  const item = state.inventory[idx];
+  state.inventory.splice(idx, 1);
+  state.keys += item.scrapVal;
+  state.stats.itemsScrapped++;
+  saveState();
+  Audio.scrap();
+  showToast(`🗑️ Scrapped for +${item.scrapVal} 🗝️`);
+  renderInventory();
+  refreshUI();
+}
+
+function scrapAllCommons() {
+  const commons = state.inventory.filter(i => i.rarity === 'common');
+  const sets    = Math.floor(commons.length / CONFIG.COMMONS_FOR_KEY);
+  if (sets < 1) { showToast('Need 5 commons to bulk-scrap!'); return; }
+  const toRemove = commons.slice(0, sets * CONFIG.COMMONS_FOR_KEY);
+  toRemove.forEach(it => {
+    state.inventory.splice(state.inventory.findIndex(i => i.uid === it.uid), 1);
+  });
+  state.keys += sets;
+  state.stats.itemsScrapped += toRemove.length;
+  saveState();
+  Audio.ding(sets);
+  showToast(`🗑️ Scrapped ${toRemove.length} commons for +${sets} 🗝️`);
+  renderInventory();
+  refreshUI();
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   SCREEN MANAGEMENT
+   ───────────────────────────────────────────────────────────────── */
+function goTo(id) {
+  Audio.button();
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+
+  if (id === 's-ad')   watchAd();
+  if (id === 's-inv')  renderInventory();
+  if (id === 's-stats') renderStats();
+  if (id === 's-open') {
+    document.getElementById('open-no-keys').style.display   = 'none';
+    document.getElementById('open-watch-btn').style.display = 'none';
+    document.getElementById('open-preroll').style.display   = 'flex';
+    document.getElementById('open-rolling').style.display   = 'none';
+    document.getElementById('reveal-overlay').classList.remove('open');
+  }
+  refreshUI();
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   UI REFRESH
+   ───────────────────────────────────────────────────────────────── */
+function refreshUI() {
+  const k = state.keys;
+  document.querySelectorAll('#keys-count, #open-keys').forEach(el => el.textContent = k);
+
+  // Home button states
+  const dur    = getAdDuration();
+  const btnOH  = document.getElementById('btn-open-home');
+  const secEl  = document.getElementById('home-ad-sec');
+  const badge  = document.getElementById('home-timer-badge');
+  if (secEl)  secEl.textContent  = `${dur}s`;
+  if (badge)  badge.textContent  = `⏱ Ad duration: ${dur}s`;
+  if (btnOH)  btnOH.disabled     = (k < CONFIG.CASE_COST);
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RENDER INVENTORY
+   ───────────────────────────────────────────────────────────────── */
+function renderInventory() {
+  const grid = document.getElementById('inv-grid');
+  const commons = state.inventory.filter(i => i.rarity === 'common');
+
+  // Stats row
+  document.getElementById('inv-stats-row').textContent =
+    `${state.inventory.length} items`;
+
+  // Common bulk-scrap bar
+  const csBar = document.getElementById('common-scrap-bar');
+  if (commons.length >= 1) {
+    csBar.style.display = 'flex';
+    document.getElementById('common-count').textContent = commons.length;
+  } else {
+    csBar.style.display = 'none';
+  }
+
+  if (!state.inventory.length) {
+    grid.innerHTML = `<div class="inv-empty">
+      <div class="inv-empty-icon">🎒</div>
+      Your inventory is empty.<br>Open some cases!
+    </div>`;
+    return;
+  }
+
+  // Sort: rarest first
+  const sorted = [...state.inventory].sort((a,b) =>
+    RARITY_ORDER.indexOf(b.rarity) - RARITY_ORDER.indexOf(a.rarity));
+
+  grid.innerHTML = sorted.map(item => {
+    const col = rarityColor(item.rarity);
+    return `<div class="inv-card" data-r="${item.rarity}" style="--rarity-color:${col}">
+      <button class="inv-scrap-btn" onclick="scrapItem(${item.uid});event.stopPropagation()" title="Scrap for ${item.scrapVal} keys">🗑️ ${item.scrapVal}k</button>
+      <span class="inv-emoji">${item.emoji}</span>
+      <span class="inv-name">${item.name}</span>
+      <div class="inv-rarity-dot" style="background:${col}"></div>
+      <span class="inv-brand">${item.brand}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RENDER STATS
+   ───────────────────────────────────────────────────────────────── */
+function renderStats() {
+  const s = state.stats;
+  const best = s.bestRarity ? `${RARITY[s.bestRarity]?.label || s.bestRarity}` : 'None';
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${s.casesOpened}</div><div class="stat-lbl">Cases Opened</div></div>
+    <div class="stat-card"><div class="stat-val">${s.adsWatched}</div><div class="stat-lbl">Ads Watched</div></div>
+    <div class="stat-card"><div class="stat-val">${state.daily.streak || 1}</div><div class="stat-lbl">Day Streak 🔥</div></div>
+    <div class="stat-card" style="color:${s.bestRarity ? rarityColor(s.bestRarity):'inherit'}">
+      <div class="stat-val" style="font-size:1.2rem">${best}</div>
+      <div class="stat-lbl">Best Pull</div>
+    </div>
+  `;
+
+  const drRows = document.getElementById('drop-rate-rows');
+  drRows.innerHTML = Object.entries(RARITY).map(([r, data]) => {
+    const pct   = data.weight;
+    const width = Math.max(2, pct);
+    return `<div class="rate-row">
+      <div class="rate-dot" style="background:${data.color}"></div>
+      <span class="rate-name" style="color:${data.color}">${data.label}</span>
+      <div class="rate-bar-wrap"><div class="rate-bar-fill" style="width:${width}%;background:${data.color}"></div></div>
+      <span class="rate-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+
+  const best4AD = getBestRarity();
+  const adRows  = document.getElementById('adt-rows');
+  adRows.innerHTML = RARITY_ORDER.concat(['none']).reverse().filter(r => r !== 'none' || true).map(r => {
+    if (r === 'none') {
+      const active = best4AD === 'none';
+      return `<div class="adt-row">
+        <div class="adt-dot" style="background:#555"></div>
+        <span class="adt-rarity" style="color:#777">No items yet</span>
+        <span class="adt-time ${active?'adt-active':''}" style="color:#777">${CONFIG.AD_DURATION.none}s</span>
+      </div>`;
+    }
+    const data   = RARITY[r];
+    const active = r === best4AD;
+    const dur    = CONFIG.AD_DURATION[r];
+    return `<div class="adt-row">
+      <div class="adt-dot" style="background:${data.color}"></div>
+      <span class="adt-rarity" style="color:${data.color}">${data.label}</span>
+      <span class="adt-time ${active?'adt-active':''}" style="color:${active?'var(--gold)':data.color}">${dur}s ${active?'← you':''}${dur===5?'⭐':''}</span>
+    </div>`;
+  }).join('');
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   INIT
+   ───────────────────────────────────────────────────────────────── */
+function init() {
+  loadState();
+  refreshUI();
+  checkDailyBonus();
+
+  // Touch swipe support for reel (bonus)
+  let touchStartX = 0;
+  document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive:true });
+}
+
+// Boot
+window.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
